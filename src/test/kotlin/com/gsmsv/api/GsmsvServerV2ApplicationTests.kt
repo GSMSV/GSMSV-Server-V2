@@ -9,9 +9,7 @@ import org.springframework.context.annotation.Import
 @SpringBootTest
 @Tag("integration")
 class GsmsvServerV2ApplicationTests {
-
     @Test
     fun contextLoads() {
     }
-
 }

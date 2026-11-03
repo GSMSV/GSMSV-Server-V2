@@ -29,6 +29,8 @@ GSMSV v2의 Kotlin API 서버(Spring Boot)다. AI 코딩 도구(Claude Code, Cod
 
 ```bash
 ./gradlew compileKotlin compileTestKotlin   # 컴파일 확인
+./gradlew ktlintCheck                       # 코드 스타일 검사 (커밋 전 필수)
+./gradlew ktlintFormat                      # 스타일 자동 수정
 ./gradlew test --tests 'com.gsmsv.api.vm.*' # 관련 테스트만 (testing.md)
 ```
 
