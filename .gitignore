@@ -6,14 +6,51 @@
 .env.*
 !.env.example
 
-# OS·IDE
+# OS
 .DS_Store
 Thumbs.db
-.idea/
-*.iml
-.vscode/
 
 # Claude Code 개인 설정
 .claude/settings.local.json
 
-# 언어별 빌드 산출물(build/, node_modules/ 등)은 이 저장소 담당이 첫 코드를 만들 때 추가한다
+### Gradle ###
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Kotlin ###
+.kotlin
