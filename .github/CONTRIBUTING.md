@@ -18,9 +18,9 @@ GSMSV v2는 분야별로 저장소를 나눈다.
 작업은 항상 이 순서로 흐른다.
 
 ```text
-이슈 만들기 → develop에서 작업 브랜치 → 커밋·push → develop으로 PR → 직접 합치기 (승인 없음)
+이슈 만들기 → develop에서 작업 브랜치 → 커밋·push → develop으로 PR → CI 통과·1명 승인 → 합치기
                                                          │
-                                         배포할 때: develop → main PR → 1명 승인 → 합치기
+                                         배포할 때: develop → main PR → CI 통과·1명 승인 → 합치기
 ```
 
 - `develop`: 다음 배포에 들어갈 코드를 모으는 브랜치. **기본 브랜치**다
@@ -93,10 +93,10 @@ git merge origin/develop
 
 ### 3.5 develop에 합치기
 
-- develop으로 가는 PR은 **승인이 필요 없다.** 확인이 끝나면 PR을 연 사람이 직접 합친다
+- develop으로 가는 PR은 **CI를 통과하고 작성자가 아닌 사람 1명이 승인**해야 합칠 수 있다. 승인을 받으면 PR을 연 사람이 직접 합친다
 - 합치는 버튼은 **Squash and merge** 하나만 있다
 - 합치기 전에 **PR 제목이 4장 형식인지 한 번 더 본다.** PR 제목이 그대로 develop의 커밋 메시지가 된다
-- 저장소에 CI(자동 검사)가 생기면, CI를 통과해야 합칠 수 있게 바뀐다
+- CI는 PR마다 `./gradlew ktlintCheck test`(빌드·전체 테스트·코드 스타일)와 PR 제목 형식을 검사한다. 실패하면 PR의 **Checks** 탭 요약과 **Files changed** 탭에 실패한 테스트와 ktlint 위반이 표시된다
 
 합친 뒤 GitHub의 작업 브랜치는 자동으로 지워진다. 내 컴퓨터의 브랜치는 직접 지운다.
 
@@ -160,7 +160,7 @@ Closes #12
 
 1. Pull requests 탭 → New pull request → **base: `main`, compare: `develop`**
 2. 제목 예: `chore: develop → main 배포`
-3. **작성자가 아닌 사람 1명이 승인**해야 합칠 수 있다. 저장소에 코드 오너(담당자 목록, `CODEOWNERS` 파일)가 정해져 있으면 그중 1명이 승인해야 한다
+3. **CI를 통과하고 작성자가 아닌 사람 1명이 승인**해야 합칠 수 있다. 저장소에 코드 오너(담당자 목록, `CODEOWNERS` 파일)가 정해져 있으면 그중 1명이 승인해야 한다
 4. 승인되면 **Create a merge commit**으로 합친다 (main으로 갈 때는 이 버튼만 있다)
 
 승인하는 방법: PR 화면 → **Files changed** 탭 → 오른쪽 위 **Review changes** → **Approve** → **Submit review**
@@ -207,7 +207,6 @@ Closes #12
 ## 11. 아직 정하지 않은 것
 
 - 저장소별 코드 오너 명단 (`CODEOWNERS`)
-- 저장소별 CI와 필수 검사
 - main은 develop에서 온 PR만 받는 검사 (CI에 넣을 예정)
 - 배포 방식과 `production` Environment
 - 배포 PR 제목 형식 (6장의 예는 제안)
