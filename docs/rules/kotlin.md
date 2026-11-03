@@ -1,5 +1,12 @@
 # Kotlin 코딩 규칙
 
+## 코드 스타일
+
+- ktlint(`ktlint_official` 스타일)를 따른다. 설정은 `.editorconfig`에 있다
+- 커밋 전에 `./gradlew ktlintCheck`를 돌린다. 실패하면 `./gradlew ktlintFormat`으로 고친 뒤 다시 검사한다
+- `ktlintFormat`이 못 고치는 위반은 직접 고친다. 규칙을 끄거나 `@Suppress`로 피하지 않는다
+- git pre-commit hook은 두지 않는다. 원격 검사는 CI가 한다
+
 ## 언어
 
 - `!!` 금지 (테스트 제외). `lateinit`은 테스트와 Spring 주입에만 쓴다
