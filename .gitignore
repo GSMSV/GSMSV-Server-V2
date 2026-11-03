@@ -1,3 +1,19 @@
+# 기획 문서는 Notion에만 둔다 (팀 규칙)
+/docs/
+
+# 비밀값
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code 개인 설정
+.claude/settings.local.json
+
+### Gradle ###
 HELP.md
 .gradle
 build/
