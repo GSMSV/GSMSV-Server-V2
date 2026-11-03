@@ -1,5 +1,6 @@
 <!--
-PR 제목이 그대로 develop의 커밋 메시지가 된다. 형식: 타입: 한국어 설명 (예: feat: VM 생성 API 추가)
+PR 제목이 그대로 develop의 커밋 메시지가 된다. 형식: 타입(scope)!: 한국어 설명. scope와 !는 선택 (예: feat: VM 생성 API 추가, feat(vm)!: VM 응답 형식 변경)
+AI 에이전트는 PR을 병합하지 않는다. 병합은 사람이 한다.
 작업 중이면 Draft로 열고, 리뷰받을 준비가 되면 "Ready for review"를 누른다.
 -->
 
