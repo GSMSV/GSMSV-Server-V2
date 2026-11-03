@@ -110,7 +110,7 @@ git branch -D feat/12-vm-create-api
 
 ## 4. 커밋·PR 제목 규칙
 
-형식은 `타입: 한국어 설명`이다. [Conventional Commits](https://www.conventionalcommits.org/ko/v1.0.0/)의 표준 타입을 쓴다.
+형식은 `타입(scope)!: 한국어 설명`이다. `(scope)`와 `!`는 선택이라 보통은 `타입: 한국어 설명`이면 된다. [Conventional Commits](https://www.conventionalcommits.org/ko/v1.0.0/)의 표준 타입을 쓴다.
 
 | 타입 | 언제 | 예 |
 |---|---|---|
@@ -129,6 +129,11 @@ git branch -D feat/12-vm-create-api
 - 콜론(`:`) 뒤에 한 칸 띄운다. 콜론 앞에는 띄우지 않는다
 - 설명은 한국어, 끝에 마침표를 찍지 않는다
 - 한 PR에는 한 가지 일만 담는다. 제목에 "그리고"가 들어가면 PR을 나눌 때다
+- **scope**(선택): 바뀐 도메인을 괄호 안에 적는다. 값은 도메인 패키지 이름을 그대로 쓴다 (예: `feat(vm): VM 생성 API 추가`). 목록은 따로 관리하지 않는다
+- **`!`**(선택): 호환성을 깨는 변경(API 계약 변경)이면 콜론 앞에 붙인다 (예: `feat(vm)!: VM 응답 형식 변경`)
+- 이슈 제목도 `타입(scope): 한국어 설명` 형식으로 쓴다. 이슈 제목에는 `!`를 붙이지 않는다
+
+라벨은 타입에 맞춰 붙인다: `feat` → `enhancement`, `fix` → `bug`, `docs` → `documentation`, 나머지 → `chore`
 
 ## 5. PR 본문
 
@@ -168,6 +173,7 @@ Closes #12
 | 비밀값을 실수로 push했을 때 커밋만 지우고 넘어가기 | 한 번 올라간 비밀값은 이미 퍼졌다고 본다. **바로 owner에게 알리고 그 비밀값을 새로 발급(교체)**한다 |
 | 보안 문제를 이슈·PR·Discord에 공개로 쓰기 | 저장소 **Security** 탭 → **Report a vulnerability**로 비공개로 알린다 |
 | develop·main에 직접 push | 막혀 있다. 항상 작업 브랜치 → PR |
+| AI 에이전트(Claude Code, Codex 등)가 PR을 병합하기 | **AI 에이전트는 어떤 경우에도 PR을 병합하지 않는다. 병합은 사람이 한다.** `gh pr merge`(`--auto` 포함), `gh api`로 병합 API 호출 모두 해당한다. AI용 지침은 [AGENTS.md](../AGENTS.md)에 있다 |
 
 ## 8. 막혔을 때
 
