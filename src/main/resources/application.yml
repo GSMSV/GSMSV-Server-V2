@@ -25,6 +25,18 @@ spring:
   flyway:
     locations: classpath:db/migration
 
+gsmsv:
+  quota:
+    # Contracts-V2 policies/quota.md 3·4장의 값이다. 배포 없이 바꿀 수 있게 프로필 설정이나 환경 변수로 덮어쓴다
+    personal:
+      vcpu: 4
+      ram-gib: 8
+      ssd-gib: 30
+    team:
+      vcpu: 8
+      ram-gib: 16
+      ssd-gib: 60
+
 management:
   endpoints:
     web:
