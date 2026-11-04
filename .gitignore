@@ -55,3 +55,6 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+# 개인 로컬 설정
+application-local.*
