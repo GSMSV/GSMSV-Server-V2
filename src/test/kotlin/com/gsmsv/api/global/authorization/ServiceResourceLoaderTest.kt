@@ -44,6 +44,18 @@ class ServiceResourceLoaderTest {
     }
 
     @Test
+    fun `403에는 필요한 범위와 요청자의 역할을 담는다`() {
+        val exception =
+            assertThrows<BusinessException> {
+                loaderWithRole(TeamRole.MEMBER).load(UserActor(ME), grn(teamVm), Action.DELETE, reader)
+            }
+
+        assertEquals(ErrorCode.ACCESS_DENIED, exception.errorCode)
+        assertEquals(mapOf("required_role" to "LEADER_OR_DEVOPS", "actor_role" to "MEMBER"), exception.details)
+        assertEquals("팀장 또는 DevOps만 할 수 있습니다. 내 역할: 일반 팀원", exception.message)
+    }
+
+    @Test
     fun `팀원이 아니면 모든 동작에 404를 돌려준다`() {
         val loader = loaderWithRole(TeamRole.LEADER)
         for (action in Action.entries) {
@@ -52,10 +64,14 @@ class ServiceResourceLoaderTest {
     }
 
     @Test
-    fun `개인 자원 소유자는 모든 동작을 할 수 있다`() {
+    fun `개인 자원 소유자는 관리자 전용 동작을 뺀 모든 동작을 할 수 있다`() {
         val loader = loader()
         for (action in Action.entries) {
-            assertSame(myVm, loader.load(UserActor(ME), grn(myVm), action, reader))
+            if (action.grant == Grant.ADMIN_ONLY) {
+                assertEquals(ErrorCode.ACCESS_DENIED, errorOf { loader.load(UserActor(ME), grn(myVm), action, reader) })
+            } else {
+                assertSame(myVm, loader.load(UserActor(ME), grn(myVm), action, reader))
+            }
         }
     }
 
@@ -73,7 +89,7 @@ class ServiceResourceLoaderTest {
         for (action in Action.entries) {
             val actor = AdminActor(ME)
             assertSame(otherTeamVm, loader.load(actor, grn(otherTeamVm), action, reader))
-            verify { auditLogger.record(actor, action, grn(otherTeamVm), Decision.ALLOW_AS_ADMIN) }
+            verify { auditLogger.record(actor, action, grn(otherTeamVm), Decision.AllowAsAdmin) }
         }
     }
 
@@ -134,7 +150,7 @@ class ServiceResourceLoaderTest {
     fun `listVisible은 관리자에게 전체를 돌려주고 감사 로그를 남긴다`() {
         val actor = AdminActor(ME)
         assertEquals(4, loader().listVisible(actor, reader).size)
-        verify { auditLogger.record(actor, Action.VIEW, "list:${ResourceType.VM.prefix}", Decision.ALLOW_AS_ADMIN) }
+        verify { auditLogger.record(actor, Action.VIEW, "list:${ResourceType.VM.prefix}", Decision.AllowAsAdmin) }
     }
 
     @Test

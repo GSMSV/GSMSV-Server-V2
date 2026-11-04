@@ -8,15 +8,19 @@ package com.gsmsv.api.global.authorization
 class AuthorizationPolicy(
     private val teamMembershipReader: TeamMembershipReader,
 ) {
+    /**
+     * @param targetUserId 동작의 대상 사용자(예: DevOps 역할을 회수할 사람). 대상이 없는 동작은 null
+     */
     fun decide(
         actor: Actor,
         owner: Owner,
         action: Action,
+        targetUserId: String? = null,
     ): Decision =
         when (actor) {
-            SystemActor -> Decision.ALLOW
-            is AdminActor -> Decision.ALLOW_AS_ADMIN
-            is UserActor -> decideForUser(actor, owner, action)
+            SystemActor -> Decision.Allow
+            is AdminActor -> Decision.AllowAsAdmin
+            is UserActor -> decideForUser(actor, owner, action, targetUserId)
         }
 
     /** 목록 조회에서 [actor]가 볼 수 있는 소유자. 관리자·SYSTEM은 전체를 보므로 null */
@@ -41,19 +45,25 @@ class AuthorizationPolicy(
         actor: UserActor,
         owner: Owner,
         action: Action,
+        targetUserId: String?,
     ): Decision =
         when (owner) {
-            // 자원 단위 공유 기능이 없으므로 남의 개인 자원은 존재 자체를 숨긴다
+            // 자원 단위 공유 기능이 없으므로 남의 개인 자원은 존재 자체를 숨긴다.
+            // 개인 자원 소유자의 권한 범위는 계약에서 "확인 필요"다 (22번 13장). 관리자 전용 동작만 뺀다
             is Owner.User -> {
-                if (owner.id == actor.userId) Decision.ALLOW else Decision.NOT_FOUND
+                when {
+                    owner.id != actor.userId -> Decision.NotFound
+                    action.grant == Grant.ADMIN_ONLY -> Decision.Forbidden(action.grant, actorRole = null)
+                    else -> Decision.Allow
+                }
             }
 
             is Owner.Team -> {
                 val role = teamMembershipReader.findRole(owner.id, actor.userId)
                 when {
-                    role == null -> Decision.NOT_FOUND
-                    RuleTable.allows(role, action) -> Decision.ALLOW
-                    else -> Decision.FORBIDDEN
+                    role == null -> Decision.NotFound
+                    RuleTable.allows(role, action, targetsSelf = targetUserId == actor.userId) -> Decision.Allow
+                    else -> Decision.Forbidden(action.grant, role)
                 }
             }
         }

@@ -1,6 +1,7 @@
 package com.gsmsv.api.global.authorization
 
 import com.gsmsv.api.global.grn.ResourceType
+import com.gsmsv.api.global.grn.SubResourceType
 
 /** GRN을 갖는 서비스 자원. [owner]는 만든 뒤 바꾸지 않는다 (엔티티에서 `updatable = false`로 매핑한다). */
 interface OwnedResource {
@@ -14,9 +15,10 @@ interface SubResource {
     val parentId: String
 }
 
-/** 팀 전용 로더가 다루는 팀. */
+/** 팀 전용 로더가 다루는 팀. [approved]는 관리자가 팀 생성을 승인했는지다 (승인 대기·거절이면 false). */
 interface TeamResource {
     val id: String
+    val approved: Boolean
 }
 
 /** 서비스 자원 조회 포트. 각 도메인이 구현하고, 로더와 `listVisible` 밖에서는 부르지 않는다 (22번 규칙). */
@@ -32,6 +34,8 @@ interface ServiceResourceReader<T : OwnedResource> {
 
 /** 하위 자원 조회 포트. 하위 자원 로더 밖에서는 부르지 않는다. */
 interface SubResourceReader<C : SubResource> {
+    val type: SubResourceType
+
     fun findById(id: String): C?
 }
 

@@ -1,6 +1,7 @@
 package com.gsmsv.api.global.authorization
 
 import com.gsmsv.api.global.grn.ResourceType
+import com.gsmsv.api.global.grn.SubResourceType
 
 const val ME = "user-a1b2c3d4e5f6"
 const val OTHER_USER = "user-b2c3d4e5f6g7"
@@ -38,6 +39,7 @@ class FakeSubResource(
 
 class FakeSubResourceReader(
     vararg children: FakeSubResource,
+    override val type: SubResourceType = SubResourceType.SNAPSHOT,
 ) : SubResourceReader<FakeSubResource> {
     private val children = children.toList()
 
@@ -46,6 +48,7 @@ class FakeSubResourceReader(
 
 class FakeTeam(
     override val id: String,
+    override val approved: Boolean = true,
 ) : TeamResource
 
 class FakeTeamReader(
