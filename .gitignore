@@ -1,6 +1,5 @@
-# 기획 문서는 Notion에만 둔다 (팀 규칙). AI 코딩 도구용 규칙 문서만 저장소에 둔다
-/docs/*
-!/docs/rules/
+# 기획 문서는 Notion에만 둔다 (팀 규칙). AI 코딩 도구용 규칙은 AGENTS.md에 둔다
+/docs/
 
 # 비밀값
 .env

@@ -132,7 +132,7 @@ async function main() {
   const dialect = input.tool_name === 'PowerShell' ? 'powershell' : 'bash'
   const problems = findProblems(command, dialect, input.cwd ?? process.cwd())
   if (problems.length > 0) {
-    process.stderr.write(`깃 규칙 위반으로 명령을 막았다 (docs/rules/git.md):\n- ${problems.join('\n- ')}\n`)
+    process.stderr.write(`깃 규칙 위반으로 명령을 막았다 (AGENTS.md 1장):\n- ${problems.join('\n- ')}\n`)
     process.exit(2)
   }
 }
