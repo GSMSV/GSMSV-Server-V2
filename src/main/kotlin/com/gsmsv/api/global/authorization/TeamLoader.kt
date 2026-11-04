@@ -18,6 +18,7 @@ class TeamLoader(
     /**
      * @param targetUserId 동작의 대상 팀원. [Grant.LEADER_OR_SELF_DEVOPS] 동작(DevOps 역할 회수)에서는 반드시 넘긴다
      * @throws BusinessException id 형식 오류는 400, 팀이 없거나 팀원이 아니면 404, 역할이 모자라거나 승인되지 않은 팀이면 403
+     * @throws IllegalStateException 요청 안에서 엔드포인트의 [RequirePermission]과 다른 동작을 넘기면
      */
     fun <T : TeamResource> load(
         actor: Actor,
@@ -26,6 +27,7 @@ class TeamLoader(
         reader: TeamReader<T>,
         targetUserId: String? = null,
     ): T {
+        DeclaredPermission.verify(action)
         require(action.grant != Grant.LEADER_OR_SELF_DEVOPS || targetUserId != null) {
             "$action 동작은 대상 사용자 id가 있어야 판단할 수 있습니다."
         }

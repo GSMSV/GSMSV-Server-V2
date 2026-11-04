@@ -1,5 +1,6 @@
 package com.gsmsv.api.global.security.dev
 
+import com.gsmsv.api.global.authorization.Public
 import com.gsmsv.api.global.grn.IdParser
 import com.gsmsv.api.global.security.AccessTokenProvider
 import com.gsmsv.api.global.security.Role
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 class DevTokenController(
     private val tokenProvider: AccessTokenProvider,
 ) {
+    @Public
     @PostMapping(DevProfiles.TOKEN_PATH)
     fun issue(
         @Valid @RequestBody request: DevTokenRequest,
