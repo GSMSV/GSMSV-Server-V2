@@ -4,14 +4,20 @@ import com.gsmsv.api.global.exception.BusinessException
 import com.gsmsv.api.global.exception.ErrorCode
 
 /**
- * 서비스 자원 GRN `grn:{소유자 id}:{자원 id}`의 파서.
+ * 서비스 자원 GRN `grn:{소유자 id}:{자원 id}`와 하위 자원 표기 `{부모 GRN}/{하위 id}`의 파서.
  *
  * GRN 문자열은 이 파서로만 다룬다. `split`·`substring`으로 직접 자르지 않는다 (23번 규칙).
  */
 object GrnParser {
     // 소유자 칸은 캡처하지 않는다. 파서 밖으로 꺼낼 길 자체를 없애려는 것이다
-    private val SERVICE_RESOURCE_GRN =
-        Regex("^grn:(?:user|team)-[0-9a-hjkmnp-tv-z]{12}:((vm|fn|db|deploy)-[0-9a-hjkmnp-tv-z]{12})$")
+    private const val OWNER = "(?:${IdPattern.USER_PREFIX}|${IdPattern.TEAM_PREFIX})-${IdPattern.LONG}"
+    private val SERVICE_RESOURCE = "((${IdPattern.SERVICE_PREFIXES})-${IdPattern.LONG})"
+
+    private val SERVICE_RESOURCE_GRN = Regex("^grn:$OWNER:$SERVICE_RESOURCE$")
+
+    // 하위 자원은 한 단계만 둔다. 하위 id 뒤에 `/`가 더 오면 맞지 않는다
+    private val SUB_RESOURCE_NOTATION =
+        Regex("^(grn:$OWNER:$SERVICE_RESOURCE)/((${IdPattern.SUB_RESOURCE_PREFIXES})-${IdPattern.SHORT})$")
 
     /**
      * GRN 전체를 검사하고 자원 id를 돌려준다.
@@ -40,6 +46,25 @@ object GrnParser {
             throw BusinessException(ErrorCode.GRN_RESOURCE_TYPE_MISMATCH)
         }
         return resourceId
+    }
+
+    /**
+     * 하위 자원 표기 `{부모 GRN}/{하위 id}` 전체를 검사하고 부모 GRN·부모 id·하위 id로 나눈다.
+     *
+     * 하위 자원이 그 부모 종류에 붙을 수 없으면(예: 서버리스 함수 밑의 `snap-`) 형식 오류로 본다.
+     * 이 조합을 정규식에서 검사할지 로더에서 검사할지는 Contracts-V2가 아직 정하지 않았다 (GSMSV/GSMSV-Contracts-V2#5).
+     *
+     * @throws BusinessException 형식이 맞지 않으면 [ErrorCode.INVALID_GRN]
+     */
+    fun parseSubResource(notation: String): SubResourceRef {
+        val match = SUB_RESOURCE_NOTATION.matchEntire(notation) ?: throw BusinessException(ErrorCode.INVALID_GRN)
+        val (parentGrn, parentId, parentPrefix, childId, childPrefix) = match.destructured
+        val parentType = ResourceType.fromPrefix(parentPrefix) ?: throw BusinessException(ErrorCode.INVALID_GRN)
+        val childType = SubResourceType.fromPrefix(childPrefix) ?: throw BusinessException(ErrorCode.INVALID_GRN)
+        if (parentType !in childType.parents) {
+            throw BusinessException(ErrorCode.INVALID_GRN)
+        }
+        return SubResourceRef(parentGrn, ResourceId(parentType, parentId), SubResourceId(childType, childId))
     }
 
     /**
