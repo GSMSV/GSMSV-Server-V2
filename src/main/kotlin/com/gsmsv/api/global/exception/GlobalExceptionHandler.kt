@@ -3,6 +3,7 @@ package com.gsmsv.api.global.exception
 import com.gsmsv.api.global.response.ErrorResponse
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.BindException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import java.util.UUID
@@ -15,6 +16,16 @@ class GlobalExceptionHandler {
         request: HttpServletRequest,
     ): ResponseEntity<ErrorResponse> {
         val errorCode = exception.errorCode
+        return ResponseEntity
+            .status(errorCode.status)
+            .body(ErrorResponse(errorCode.name, errorCode.message, requestId(request)))
+    }
+
+    // MethodArgumentNotValidException도 BindException이라 함께 잡힌다.
+    // 어떤 값이 틀렸는지는 메시지에 넣지 않는다. 입력 값을 그대로 되돌려 주지 않으려는 것이다
+    @ExceptionHandler(BindException::class)
+    fun handleBindException(request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+        val errorCode = ErrorCode.INVALID_REQUEST
         return ResponseEntity
             .status(errorCode.status)
             .body(ErrorResponse(errorCode.name, errorCode.message, requestId(request)))

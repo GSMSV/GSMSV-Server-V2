@@ -7,6 +7,8 @@ enum class ErrorCode(
     val status: HttpStatus,
     val message: String,
 ) {
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다."),
+    INVALID_CURSOR(HttpStatus.BAD_REQUEST, "커서 형식이 올바르지 않습니다."),
     INVALID_GRN(HttpStatus.BAD_REQUEST, "GRN 형식이 올바르지 않습니다."),
     GRN_RESOURCE_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "이 API에서 다룰 수 없는 자원 종류입니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 동작을 할 권한이 없습니다."),
