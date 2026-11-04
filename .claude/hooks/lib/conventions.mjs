@@ -1,4 +1,4 @@
-// 브랜치·커밋·PR·이슈 제목 규칙. 원본은 .github/CONTRIBUTING.md 4장, 요약은 docs/rules/git.md
+// 브랜치·커밋·PR·이슈 제목 규칙. 원본은 .github/CONTRIBUTING.md 4장, AI용 요약은 AGENTS.md 1장
 
 export const TYPES = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert']
 
@@ -52,7 +52,7 @@ export function checkTitle(title, kind) {
   const [, , scopeGroup, scope, bang, description] = m
   const problems = []
   if (scopeGroup !== undefined && !SCOPE_RE.test(scope)) {
-    problems.push(`scope \`${scope}\`: 도메인 패키지 이름을 그대로 쓴다 (영어 소문자, 예: vm)`)
+    problems.push(`scope \`${scope}\`: 도메인 패키지나 global 하위 패키지 이름을 그대로 쓴다 (영어 소문자, 예: vm, config)`)
   }
   if (bang && kind === 'issue') problems.push('이슈 제목에는 !를 쓰지 않는다')
   if (description.length === 0 || /^\s/.test(description)) problems.push('콜론 뒤에는 정확히 한 칸 띄운다')
