@@ -52,6 +52,23 @@ class GrnParserTest {
         assertEquals(ErrorCode.INVALID_GRN, exception.errorCode)
     }
 
+    @ParameterizedTest
+    @MethodSource("validSubResources")
+    fun `맞는 하위 자원 표기는 부모 GRN·부모 id·하위 id로 나눈다`(
+        notation: String,
+        expected: SubResourceRef,
+    ) {
+        assertEquals(expected, GrnParser.parseSubResource(notation))
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidSubResources")
+    fun `틀린 하위 자원 표기는 INVALID_GRN으로 거절한다`(notation: String) {
+        val exception = assertThrows<BusinessException> { GrnParser.parseSubResource(notation) }
+
+        assertEquals(ErrorCode.INVALID_GRN, exception.errorCode)
+    }
+
     @Test
     fun `DB 값으로 만든 GRN은 요청 GRN과 같다`() {
         val grn = "grn:team-4p8w2k9m1xza:vm-k3m9x2p7q4ta"
@@ -67,6 +84,69 @@ class GrnParserTest {
 
     companion object {
         private const val OWNER = "team-4p8w2k9m1xza"
+        private const val VM_GRN = "grn:$OWNER:vm-k3m9x2p7q4ta"
+        private val VM = ResourceId(ResourceType.VM, "vm-k3m9x2p7q4ta")
+
+        @JvmStatic
+        fun validSubResources() =
+            listOf(
+                arrayOf("$VM_GRN/snap-7qz3m8k2", SubResourceRef(VM_GRN, VM, SubResourceId(SubResourceType.SNAPSHOT, "snap-7qz3m8k2"))),
+                arrayOf(
+                    "$VM_GRN/fwrule-7m3k9p2x",
+                    SubResourceRef(VM_GRN, VM, SubResourceId(SubResourceType.FIREWALL_RULE, "fwrule-7m3k9p2x")),
+                ),
+                arrayOf(
+                    "grn:$OWNER:fn-6d2r8t5y3n7e/trigger-5n3w7r2x",
+                    SubResourceRef(
+                        "grn:$OWNER:fn-6d2r8t5y3n7e",
+                        ResourceId(ResourceType.FUNCTION, "fn-6d2r8t5y3n7e"),
+                        SubResourceId(SubResourceType.TRIGGER, "trigger-5n3w7r2x"),
+                    ),
+                ),
+                arrayOf(
+                    "grn:$OWNER:app-k3m9x2p7q4ta/domain-4k8m2q9t",
+                    SubResourceRef(
+                        "grn:$OWNER:app-k3m9x2p7q4ta",
+                        ResourceId(ResourceType.APP, "app-k3m9x2p7q4ta"),
+                        SubResourceId(SubResourceType.DOMAIN, "domain-4k8m2q9t"),
+                    ),
+                ),
+                arrayOf(
+                    "grn:$OWNER:db-k3m9x2p7q4ta/backup-3x7q9m4k",
+                    SubResourceRef(
+                        "grn:$OWNER:db-k3m9x2p7q4ta",
+                        ResourceId(ResourceType.DATABASE, "db-k3m9x2p7q4ta"),
+                        SubResourceId(SubResourceType.BACKUP, "backup-3x7q9m4k"),
+                    ),
+                ),
+            )
+
+        @JvmStatic
+        fun invalidSubResources() =
+            listOf(
+                // 하위 id가 틀림
+                "$VM_GRN/snap-7qz3m8k",
+                "$VM_GRN/snap-7qz3m8kl",
+                "$VM_GRN/snap-k3m9x2p7q4ta",
+                "$VM_GRN/SNAP-7qz3m8k2",
+                "$VM_GRN/unknown-7qz3m8k2",
+                "$VM_GRN/",
+                // 하위 자원은 한 단계만 둔다
+                "$VM_GRN/snap-7qz3m8k2/port-5q8w3n7z",
+                // 부모 종류에 붙을 수 없는 하위 자원
+                "grn:$OWNER:fn-6d2r8t5y3n7e/snap-7qz3m8k2",
+                "grn:$OWNER:db-k3m9x2p7q4ta/domain-4k8m2q9t",
+                "$VM_GRN/backup-3x7q9m4k",
+                // 부모 GRN이 틀림
+                "grn:$OWNER:vm-k3m9x2p7/snap-7qz3m8k2",
+                "grn:vm-k3m9x2p7q4ta:vm-k3m9x2p7q4ta/snap-7qz3m8k2",
+                "snap-7qz3m8k2",
+                VM_GRN,
+                // 앞뒤 공백·줄바꿈
+                " $VM_GRN/snap-7qz3m8k2",
+                "$VM_GRN/snap-7qz3m8k2 ",
+                "$VM_GRN/snap-7qz3m8k2\n",
+            )
 
         @JvmStatic
         fun validGrns() =
@@ -74,7 +154,7 @@ class GrnParserTest {
                 arrayOf("grn:$OWNER:vm-k3m9x2p7q4ta", ResourceId(ResourceType.VM, "vm-k3m9x2p7q4ta")),
                 arrayOf("grn:$OWNER:fn-6d2r8t5y3n7e", ResourceId(ResourceType.FUNCTION, "fn-6d2r8t5y3n7e")),
                 arrayOf("grn:$OWNER:db-k3m9x2p7q4ta", ResourceId(ResourceType.DATABASE, "db-k3m9x2p7q4ta")),
-                arrayOf("grn:$OWNER:deploy-k3m9x2p7q4ta", ResourceId(ResourceType.DEPLOY, "deploy-k3m9x2p7q4ta")),
+                arrayOf("grn:$OWNER:app-k3m9x2p7q4ta", ResourceId(ResourceType.APP, "app-k3m9x2p7q4ta")),
                 arrayOf("grn:user-8hq2m5v7c3kx:vm-k3m9x2p7q4ta", ResourceId(ResourceType.VM, "vm-k3m9x2p7q4ta")),
             )
 
@@ -96,8 +176,9 @@ class GrnParserTest {
                 // 하위 자원 표기는 서비스 자원 파서가 받지 않는다
                 "grn:$OWNER:vm-k3m9x2p7q4ta/snap-7qz3m8k2",
                 "grn:$OWNER:vm-k3m9x2p7q4ta/snap-7qz3m8k2/port-5q8w3n7z",
-                // 정해지지 않은 접두사
-                "grn:$OWNER:app-k3m9x2p7q4ta",
+                // 정해지지 않은 접두사 (원터치 배포는 `deploy`가 아니라 `app`이다)
+                "grn:$OWNER:deploy-k3m9x2p7q4ta",
+                "grn:$OWNER:team-4p8w2k9m1xza",
                 // 앞뒤 공백·줄바꿈·대문자
                 " grn:$OWNER:vm-k3m9x2p7q4ta",
                 "grn:$OWNER:vm-k3m9x2p7q4ta ",

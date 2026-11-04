@@ -154,7 +154,7 @@ Closes #12
 ```
 
 - **`Closes #번호`**: PR이 develop에 합쳐지면 그 이슈가 자동으로 닫힌다. 이슈가 없으면 이 줄을 지운다
-- **확인 항목**: 해당하는 것만 체크한다. 22번(권한 판단 Layer)·23번(자원 이름 규칙)의 자세한 내용은 팀 Notion 기능명세서에 있다. 두 규칙을 어기면 보안 사고로 이어질 수 있어서 PR마다 확인한다
+- **확인 항목**: 해당하는 것만 체크한다. 22번(권한 판단 Layer)·23번(자원 이름 규칙)의 자세한 내용은 [GSMSV-Contracts-V2](https://github.com/GSMSV/GSMSV-Contracts-V2)의 `rules/authorization.md`·`rules/resource-naming.md`에 있다. 두 규칙을 어기면 보안 사고로 이어질 수 있어서 PR마다 확인한다
 
 ## 6. 배포: develop → main
 

@@ -39,7 +39,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleBusinessException(
         exception: BusinessException,
         request: HttpServletRequest,
-    ): ResponseEntity<ErrorResponse> = errorResponse(exception.errorCode, requestIdOf(request), exception.details)
+    ): ResponseEntity<ErrorResponse> = errorResponse(exception.errorCode, requestIdOf(request), exception.details, exception.message)
 
     @ExceptionHandler(Exception::class)
     fun handleUnexpectedException(
@@ -135,10 +135,11 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         errorCode: ErrorCode,
         requestId: String,
         details: Map<String, Any?>? = null,
+        message: String = errorCode.message,
     ): ResponseEntity<ErrorResponse> =
         ResponseEntity
             .status(errorCode.status)
-            .body(ErrorResponse(errorCode.name, errorCode.message, requestId, details))
+            .body(ErrorResponse(errorCode.name, message, requestId, details))
 
     private fun requestIdOf(request: HttpServletRequest): String =
         request.getAttribute(RequestIdFilter.ATTRIBUTE) as? String ?: RequestIdFilter.generate()

@@ -31,7 +31,7 @@ class ServiceResourceLoader(
             throw BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
         }
         val decision = policy.decide(actor, resource.owner, action)
-        if (decision == Decision.ALLOW_AS_ADMIN) {
+        if (decision == Decision.AllowAsAdmin) {
             auditLogger.record(actor, action, grn, decision)
         }
         decision.throwIfDenied()
@@ -46,7 +46,7 @@ class ServiceResourceLoader(
         val owners = policy.visibleOwners(actor)
         if (owners == null) {
             if (actor is AdminActor) {
-                auditLogger.record(actor, Action.VIEW, "list:${reader.type.prefix}", Decision.ALLOW_AS_ADMIN)
+                auditLogger.record(actor, Action.VIEW, "list:${reader.type.prefix}", Decision.AllowAsAdmin)
             }
             return reader.findAll()
         }

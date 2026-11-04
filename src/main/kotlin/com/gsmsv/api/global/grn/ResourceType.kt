@@ -11,7 +11,7 @@ enum class ResourceType(
     VM("vm"),
     FUNCTION("fn"),
     DATABASE("db"),
-    DEPLOY("deploy"),
+    APP("app"),
     ;
 
     companion object {
