@@ -70,6 +70,7 @@ class GlobalExceptionHandlerTest {
             status { isForbidden() }
             jsonPath("$.code") { value("ACCESS_DENIED") }
             jsonPath("$.details.required_role") { value("LEADER") }
+            jsonPath("$.message") { value("팀장만 할 수 있습니다.") }
         }
     }
 
@@ -174,7 +175,7 @@ class GlobalExceptionHandlerTest {
         ): String = request.vmName
 
         @GetMapping("/test/details")
-        fun details(): String = throw BusinessException(ErrorCode.ACCESS_DENIED, mapOf("required_role" to "LEADER"))
+        fun details(): String = throw BusinessException(ErrorCode.ACCESS_DENIED, mapOf("required_role" to "LEADER"), "팀장만 할 수 있습니다.")
 
         @GetMapping("/test/boom")
         fun boom(): String = throw IllegalStateException("secret-detail")
