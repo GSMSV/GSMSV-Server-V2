@@ -9,6 +9,8 @@ description: 이 저장소의 깃 컨벤션(docs/rules/git.md)에 맞춰 변경 
 
 규칙이 이 문서와 git.md·CONTRIBUTING.md 사이에서 다르면 CONTRIBUTING.md → git.md → 이 문서 순으로 따른다.
 
+**사용자에게 보내는 모든 텍스트(진행 안내, 질문, 보고)는 한국어로 쓴다.** 사용자 메시지에 한국어 문장이 없어도 마찬가지다. 코드 식별자·명령어는 그대로 둔다.
+
 ## 1. 브랜치 확인
 
 ```bash

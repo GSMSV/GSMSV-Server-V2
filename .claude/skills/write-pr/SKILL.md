@@ -9,6 +9,8 @@ description: 이 저장소의 깃 컨벤션(docs/rules/git.md)에 맞춰 develop
 
 **PR은 열기까지만 한다. 병합은 사람이 한다.** `gh pr merge`(`--auto` 포함), `gh api`로 병합 API를 부르는 것 모두 금지다. `.claude/hooks/block-pr-merge.mjs`가 막으며, 우회하지 않는다.
 
+**사용자에게 보내는 모든 텍스트(진행 안내, 질문, 보고)는 한국어로 쓴다.** 사용자 메시지에 한국어 문장이 없어도 마찬가지다. 코드 식별자·명령어는 그대로 둔다.
+
 ## 1. 브랜치 확인
 
 ```bash
