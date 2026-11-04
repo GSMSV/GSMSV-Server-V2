@@ -12,7 +12,9 @@ import com.gsmsv.api.global.authorization.ServiceResourceReader
 import com.gsmsv.api.global.authorization.TeamMembershipReader
 import com.gsmsv.api.global.authorization.TeamRole
 import org.springframework.boot.test.context.TestConfiguration
+import com.gsmsv.api.example.controller.ExampleController
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import java.time.Instant
 
 /**
@@ -22,6 +24,7 @@ import java.time.Instant
  * 팀 도메인이 생기면 이 부분은 실제 빈으로 바뀌고, 테스트는 reader만 가짜로 넣으면 된다.
  */
 @TestConfiguration(proxyBeanMethods = false)
+@Import(ExampleController::class)
 class ExampleTestConfig {
     @Bean
     fun teamMembershipReader(): TeamMembershipReader = FakeMemberships
