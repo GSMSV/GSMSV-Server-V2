@@ -1,5 +1,6 @@
 package com.gsmsv.api.example
 
+import com.gsmsv.api.example.controller.ExampleController
 import com.gsmsv.api.example.domain.Example
 import com.gsmsv.api.example.repository.InMemoryExampleReader
 import com.gsmsv.api.example.service.ExampleService
@@ -12,7 +13,6 @@ import com.gsmsv.api.global.authorization.ServiceResourceReader
 import com.gsmsv.api.global.authorization.TeamMembershipReader
 import com.gsmsv.api.global.authorization.TeamRole
 import org.springframework.boot.test.context.TestConfiguration
-import com.gsmsv.api.example.controller.ExampleController
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import java.time.Instant
