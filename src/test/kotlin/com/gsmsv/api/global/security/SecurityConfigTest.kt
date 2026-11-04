@@ -1,5 +1,6 @@
 package com.gsmsv.api.global.security
 
+import com.gsmsv.api.global.authorization.Authenticated
 import com.gsmsv.api.global.config.RequestIdFilter
 import com.gsmsv.api.global.security.dev.DevSecurityConfig
 import com.gsmsv.api.global.security.dev.DevTokenController
@@ -39,11 +40,13 @@ class SecurityConfigTest(
 ) {
     @RestController
     class TestController {
+        @Authenticated
         @GetMapping("/test/me")
         fun me(
             @CurrentUser user: AuthenticatedUser,
         ): AuthenticatedUser = user
 
+        @Authenticated
         @PostMapping("/test/me")
         fun change(
             @CurrentUser user: AuthenticatedUser,

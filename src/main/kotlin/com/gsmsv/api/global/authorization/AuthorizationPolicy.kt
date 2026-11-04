@@ -16,11 +16,28 @@ class AuthorizationPolicy(
         owner: Owner,
         action: Action,
         targetUserId: String? = null,
-    ): Decision =
+    ): Decision = decideAll(actor, owner, listOf(action), targetUserId).getValue(action)
+
+    /** 여러 동작을 한 번에 판단한다. 팀 역할은 한 번만 읽는다. 결과는 [actions] 순서를 따른다 */
+    fun decideAll(
+        actor: Actor,
+        owner: Owner,
+        actions: Collection<Action>,
+        targetUserId: String? = null,
+    ): Map<Action, Decision> =
         when (actor) {
-            SystemActor -> Decision.Allow
-            is AdminActor -> Decision.AllowAsAdmin
-            is UserActor -> decideForUser(actor, owner, action, targetUserId)
+            SystemActor -> {
+                actions.associateWith { Decision.Allow }
+            }
+
+            is AdminActor -> {
+                actions.associateWith { Decision.AllowAsAdmin }
+            }
+
+            is UserActor -> {
+                val role = (owner as? Owner.Team)?.let { teamMembershipReader.findRole(it.id, actor.userId) }
+                actions.associateWith { decideForUser(actor, owner, role, it, targetUserId) }
+            }
         }
 
     /** 목록 조회에서 [actor]가 볼 수 있는 소유자. 관리자·SYSTEM은 전체를 보므로 null */
@@ -41,9 +58,11 @@ class AuthorizationPolicy(
             }
         }
 
+    /** @param role [owner]가 팀일 때 그 팀에서 요청자의 역할. 팀원이 아니거나 개인 자원이면 null */
     private fun decideForUser(
         actor: UserActor,
         owner: Owner,
+        role: TeamRole?,
         action: Action,
         targetUserId: String?,
     ): Decision =
@@ -59,7 +78,6 @@ class AuthorizationPolicy(
             }
 
             is Owner.Team -> {
-                val role = teamMembershipReader.findRole(owner.id, actor.userId)
                 when {
                     role == null -> Decision.NotFound
                     RuleTable.allows(role, action, targetsSelf = targetUserId == actor.userId) -> Decision.Allow

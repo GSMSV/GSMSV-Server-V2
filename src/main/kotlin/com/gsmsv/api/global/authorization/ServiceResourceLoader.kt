@@ -17,6 +17,7 @@ class ServiceResourceLoader(
      * GRN으로 자원을 꺼내고 [action] 권한을 판단한다.
      *
      * @throws BusinessException GRN 형식·종류 오류는 400, 볼 수 없으면 404, 권한이 없으면 403
+     * @throws IllegalStateException 요청 안에서 엔드포인트의 [RequirePermission]과 다른 동작을 넘기면
      */
     fun <T : OwnedResource> load(
         actor: Actor,
@@ -24,6 +25,7 @@ class ServiceResourceLoader(
         action: Action,
         reader: ServiceResourceReader<T>,
     ): T {
+        DeclaredPermission.verify(action)
         val resourceId = GrnParser.parse(grn, reader.type)
         val resource = reader.findById(resourceId.value) ?: throw BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
         // 요청 GRN의 소유자 칸은 믿지 않는다. DB 값으로 다시 만든 GRN과 통째로 같아야 한다

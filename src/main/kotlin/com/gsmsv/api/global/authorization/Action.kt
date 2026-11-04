@@ -59,4 +59,12 @@ enum class Action(
 
     APPROVE_TEAM(Grant.ADMIN_ONLY),
     APPROVE_DISBAND_TEAM(Grant.ADMIN_ONLY),
+    ;
+
+    /**
+     * `permissions` 응답의 키. 키 형식(`delete` / `vm.delete`)은 Contracts-V2가 아직 정하지 않았다 (api-rules 3장).
+     * 지금은 JSON 필드와 같은 snake_case 소문자로 둔다 (예: `view_access_info`)
+     */
+    val permissionKey: String
+        get() = name.lowercase()
 }
