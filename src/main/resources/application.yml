@@ -26,6 +26,11 @@ spring:
     locations: classpath:db/migration
 
 gsmsv:
+  security:
+    jwt:
+      # Base64로 인코딩한 32바이트 이상의 무작위 값. 환경 변수로만 받고 기본값을 두지 않는다 (예: openssl rand -base64 32)
+      secret: ${JWT_SECRET}
+      access-token-ttl: 15m
   quota:
     # Contracts-V2 policies/quota.md 3·4장의 값이다. 배포 없이 바꿀 수 있게 프로필 설정이나 환경 변수로 덮어쓴다
     personal:

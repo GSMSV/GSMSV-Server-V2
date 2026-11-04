@@ -215,3 +215,14 @@ com.gsmsv.api
 - **(미정)** 형식은 맞지만 엔드포인트와 자원 종류가 다를 때(예: VM API에 `fn-` GRN)의 응답. 지금 서버는 400(`GRN_RESOURCE_TYPE_MISMATCH`)으로 둔다 (GSMSV/GSMSV-Contracts-V2#4)
 - **(미정)** 하위 자원 표기의 정규식 표기. 지금 서버는 `^{서비스 자원 GRN}/{하위 접두사}-{무작위 8자}$`로 한 단계만 받는다 (GSMSV/GSMSV-Contracts-V2#5)
 - **(미정)** 하위 자원이 그 부모 종류에 붙을 수 없을 때(예: 서버리스 함수 밑의 `snap-`) 정규식과 로더 중 어디서 거절할지. 지금 서버는 파서가 형식 오류로 거절한다 (GSMSV/GSMSV-Contracts-V2#5)
+
+### 5.5 인증
+
+- API 인증 토큰은 이 서버가 발급한 액세스 토큰(HS256 JWT)만 받는다. DataGSM 토큰은 로그인할 때 신원 확인에만 쓴다. 발급·검증은 `com.gsmsv.api.global.security.AccessTokenProvider` 한 곳에서 한다
+- 토큰은 `Authorization: Bearer` 헤더를 먼저 보고, 없으면 쿠키에서 꺼낸다. CSRF 검사를 끈 대신 다른 사이트 요청(`Sec-Fetch-Site: cross-site`)에는 쿠키를 쓰지 않는다
+- 인증 없이 여는 경로는 `SecurityConfig.PUBLIC_PATHS`에만 추가한다. 나머지는 모두 401(`UNAUTHENTICATED`)이다
+- controller는 `@CurrentUser AuthenticatedUser`로 요청자를 받고, 로더에는 `toActor()`로 바꿔 넘긴다
+- 서명 키(`JWT_SECRET`)는 환경 변수로만 받는다. 로컬에서도 `openssl rand -base64 32`로 만든 값을 넣어 실행한다
+- 개발용 토큰 API(`POST /api/v2/dev/token`)는 `dev`·`local` 프로필에서만 빈을 만든다. 운영에서 열리게 바꾸지 않는다
+- **(미정)** 토큰 쿠키 이름과 액세스 토큰 수명. 지금 서버는 `access_token`, 15분으로 둔다 (계약에 없음, 이슈 없음)
+- **(미정)** 개발용 토큰 API의 명세. 개발 도구라 계약에 OpenAPI 명세가 없다 (이슈 없음)
