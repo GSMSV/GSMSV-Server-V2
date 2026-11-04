@@ -5,6 +5,7 @@ import com.gsmsv.api.global.response.ErrorResponse
 import com.gsmsv.api.global.response.FieldErrorDetail
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.beans.TypeMismatchException
 import org.springframework.context.MessageSourceResolvable
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatusCode
@@ -73,14 +74,41 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
                     notReadable(ex, requestId)
                 }
 
+                is TypeMismatchException -> {
+                    typeMismatch(ex, statusCode, requestId)
+                }
+
                 else -> {
-                    if (statusCode.is5xxServerError) log.error(ex) { "처리하지 못한 예외" }
-                    // 상태 코드는 Spring이 정한 값을 따른다 (406, 413처럼 따로 code를 두지 않은 상태도 있다)
-                    errorResponse(errorCodeOf(ex, statusCode), requestId).let { ResponseEntity.status(statusCode).body(it.body) }
+                    springError(ex, statusCode, requestId)
                 }
             }
         // 405의 Allow처럼 Spring이 정한 헤더는 그대로 둔다
         return ResponseEntity.status(response.statusCode).headers(headers).body(response.body)
+    }
+
+    // 경로 변수 변환기(예: StringToGrnConverter)가 던진 BusinessException은 Spring이 TypeMismatchException으로 감싸서 넘긴다.
+    // 감싼 채로 두면 INVALID_REQUEST가 되므로 원래 code로 돌려준다
+    private fun typeMismatch(
+        exception: TypeMismatchException,
+        statusCode: HttpStatusCode,
+        requestId: String,
+    ): ResponseEntity<ErrorResponse> {
+        val business =
+            generateSequence<Throwable>(exception) { it.cause }
+                .filterIsInstance<BusinessException>()
+                .firstOrNull()
+                ?: return springError(exception, statusCode, requestId)
+        return errorResponse(business.errorCode, requestId, business.details, business.message)
+    }
+
+    private fun springError(
+        exception: Exception,
+        statusCode: HttpStatusCode,
+        requestId: String,
+    ): ResponseEntity<ErrorResponse> {
+        if (statusCode.is5xxServerError) log.error(exception) { "처리하지 못한 예외" }
+        // 상태 코드는 Spring이 정한 값을 따른다 (406, 413처럼 따로 code를 두지 않은 상태도 있다)
+        return errorResponse(errorCodeOf(exception, statusCode), requestId).let { ResponseEntity.status(statusCode).body(it.body) }
     }
 
     private fun validationFailed(
