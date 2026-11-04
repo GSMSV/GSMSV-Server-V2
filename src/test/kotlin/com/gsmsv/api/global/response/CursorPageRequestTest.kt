@@ -39,16 +39,13 @@ class CursorPageRequestTest {
 
     @ParameterizedTest
     @ValueSource(strings = ["0", "101", "-1", "abc"])
-    fun `limit이 범위를 벗어나면 400 INVALID_REQUEST를 돌려준다`(limit: String) {
-        mockMvc
-            .get("/test/items") {
-                param("limit", limit)
-                header("X-Request-Id", "req-1")
-            }.andExpect {
-                status { isBadRequest() }
-                jsonPath("$.code") { value("INVALID_REQUEST") }
-                jsonPath("$.request_id") { value("req-1") }
-            }
+    fun `limit이 범위를 벗어나면 400 VALIDATION_FAILED를 돌려준다`(limit: String) {
+        mockMvc.get("/test/items") { param("limit", limit) }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+            jsonPath("$.details.fields[0].field") { value("limit") }
+            jsonPath("$.request_id") { isNotEmpty() }
+        }
     }
 
     @Test

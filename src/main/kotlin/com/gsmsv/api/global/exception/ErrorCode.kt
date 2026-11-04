@@ -2,15 +2,21 @@ package com.gsmsv.api.global.exception
 
 import org.springframework.http.HttpStatus
 
-// code 이름은 Contracts-V2 공통 에러 code 목록이 정해지면 그에 맞춘다 (Contracts #4)
+// 공통 code 목록은 Contracts-V2가 아직 정하지 않았다 (api-rules 3장). 정해지면 이름을 맞춘다 (#18)
 enum class ErrorCode(
     val status: HttpStatus,
     val message: String,
 ) {
-    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다."),
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "요청 형식이 올바르지 않습니다."),
+    VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
+    UNKNOWN_FIELD(HttpStatus.BAD_REQUEST, "알 수 없는 필드가 있습니다."),
     INVALID_CURSOR(HttpStatus.BAD_REQUEST, "커서 형식이 올바르지 않습니다."),
     INVALID_GRN(HttpStatus.BAD_REQUEST, "GRN 형식이 올바르지 않습니다."),
     GRN_RESOURCE_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "이 API에서 다룰 수 없는 자원 종류입니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 동작을 할 권한이 없습니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자원을 찾을 수 없습니다."),
+    ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 API가 없습니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "이 API에서 지원하지 않는 HTTP 메서드입니다."),
+    UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 Content-Type입니다."),
+    INTERNAL(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
 }
