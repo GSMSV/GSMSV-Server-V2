@@ -191,6 +191,10 @@ com.gsmsv.api
   - `ServiceResourceLoader` (GRN): 파서 검사 → id로 DB 1회 조회 → DB 값으로 GRN을 다시 만들어 요청 GRN과 통째로 비교(다르면 404) → 규칙표 판단
   - `SubResourceLoader` (부모 GRN + 하위 id, 또는 하위 자원 표기): 하위 id 형식 검사 → 부모를 위 과정으로 통과시킨 뒤 하위 자원을 찾고, 실제 부모가 요청의 부모와 같은지 확인(다르면 404). 부모 GRN 없이 하위 id만으로 찾는 길은 두지 않는다
   - `TeamLoader` (팀 id): 팀 id 형식 검사 → 같은 규칙표로 판단하고 감사 로그를 남긴다. 팀 앞으로 VM·데이터베이스를 만드는 동작도 이 로더로 판단한다
+- 컨트롤러 메서드마다 `@RequirePermission(Action.X)`, `@Authenticated`, `@Public` 중 하나만 붙인다. 없거나 둘 이상이면 앱이 뜨지 않는다 (`EndpointAnnotationVerifier`). 테스트용 컨트롤러도 같다
+  - 로더를 부르는 엔드포인트는 `@RequirePermission`을 달고, 로더에 같은 `Action`을 넘긴다. 다르거나 선언이 없으면 500으로 실패한다
+  - `@Public`은 `SecurityConfig.PUBLIC_PATHS`에도 경로를 추가해야 열린다
+- 자원 응답의 `permissions`는 `PermissionsResolver`로 만든다. 로더와 같은 규칙표를 쓴다
 - 목록 조회는 같은 규칙표를 쓰는 `listVisible(user)`만 쓴다
 - 서비스 자원 repository의 id 조회는 로더와 `listVisible` 밖에서 호출하지 않는다
 - service는 id가 아니라 **로더가 돌려준 자원 객체**를 받는다
@@ -200,7 +204,7 @@ com.gsmsv.api
 - **(미정)** 403 `details`의 키 이름. 지금 서버는 `details.required_role`, `details.actor_role`로 둔다 (계약 `rules/api-rules.md` 2.1, 이슈 없음)
 - **(미정)** `SYSTEM`의 동작 범위. 지금 서버는 `SYSTEM`에 모든 동작을 허용한다 (계약 `rules/authorization.md` 8장, 이슈 없음)
 - **(미정)** 개인 자원 소유자의 권한 범위. 지금 서버는 관리자 전용 동작을 뺀 모든 동작을 허용한다 (계약 `rules/authorization.md` 13장, 이슈 없음)
-- **(미정)** 동작 이름 형식(`vm.delete`처럼 자원 접두사를 붙이는지)과 목록. 지금 `Action`은 자원 종류가 없는 enum이다 (계약 `rules/api-rules.md` 3장, 이슈 없음)
+- **(미정)** 동작 이름 형식(`vm.delete`처럼 자원 접두사를 붙이는지)과 목록. 지금 `Action`은 자원 종류가 없는 enum이고, `@RequirePermission`도 문자열 대신 `Action`을 받는다. `permissions` 키는 `Action` 이름의 소문자(`delete`, `view_access_info`)다 (계약 `rules/api-rules.md` 3장, 이슈 없음)
 
 ### 5.4 GRN·id 파서 (23번)
 
