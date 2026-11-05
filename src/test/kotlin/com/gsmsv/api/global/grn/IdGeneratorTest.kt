@@ -31,6 +31,15 @@ class IdGeneratorTest {
         IdParser.requireTeamId(IdGenerator.teamId())
     }
 
+    @RepeatedTest(100)
+    fun `만든 팀원 id는 계약 형식에 맞는다`() {
+        val id = IdGenerator.teamMemberId()
+
+        assertEquals(16, id.length)
+        assertEquals("mbr-", id.take(4))
+        assertEquals(true, id.drop(4).all { it in IdPattern.ALPHABET })
+    }
+
     @Test
     fun `무작위 부분은 계약의 32글자를 모두 쓰고 그 밖의 글자는 쓰지 않는다`() {
         val used =
