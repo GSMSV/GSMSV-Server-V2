@@ -64,6 +64,21 @@ class TeamPersistenceTest
         }
 
         @Test
+        fun `기존 팀원을 팀장으로 바꿔도 팀장이 두 명이면 DB가 막는다`() {
+            val teamId = IdGenerator.teamId()
+            teamRepository.saveAndFlush(Team(teamId, "팀장 역할 변경 테스트 팀"))
+            teamMemberRepository.saveAndFlush(TeamMember(IdGenerator.teamMemberId(), teamId, USER_ID, TeamRole.LEADER))
+            val member = TeamMember(IdGenerator.teamMemberId(), teamId, OTHER_USER_ID, TeamRole.MEMBER)
+            teamMemberRepository.saveAndFlush(member)
+
+            member.changeRole(TeamRole.LEADER)
+
+            assertFailsWith<DataIntegrityViolationException> {
+                teamMemberRepository.saveAndFlush(member)
+            }
+        }
+
+        @Test
         fun `한 사용자는 같은 팀에 중복 등록할 수 없다`() {
             val teamId = IdGenerator.teamId()
             teamRepository.saveAndFlush(Team(teamId, "멤버 중복 테스트 팀"))
