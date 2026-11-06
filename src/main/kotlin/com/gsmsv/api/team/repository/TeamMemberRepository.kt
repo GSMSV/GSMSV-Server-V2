@@ -19,10 +19,10 @@ interface TeamMemberRepository : JpaRepository<TeamMember, String> {
 
     @Query(
         """
-        select member.teamId as teamId, count(member) as memberCount
-        from TeamMember member
-        where member.teamId in :teamIds
-        group by member.teamId
+        select teamMember.teamId as teamId, count(teamMember) as memberCount
+        from TeamMember teamMember
+        where teamMember.teamId in :teamIds
+        group by teamMember.teamId
         """,
     )
     fun countByTeamIds(
