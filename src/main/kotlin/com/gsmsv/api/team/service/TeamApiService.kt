@@ -84,7 +84,7 @@ class TeamApiService(
                 name = team.name,
                 status = team.status.name.lowercase(),
                 myRole = roles.getValue(team.id).name.lowercase(),
-                memberCount = memberCounts.getValue(team.id).toInt(),
+                memberCount = memberCounts[team.id]?.toInt() ?: 0,
             )
         }
     }
@@ -98,8 +98,8 @@ class TeamApiService(
         val members = teamMemberRepository.findAllByTeamIdOrderByIdAsc(team.id)
         val usersById = userService.findSummariesByIds(members.map { it.userId })
         val memberResponses =
-            members.map { member ->
-                val user = usersById.getValue(member.userId)
+            members.mapNotNull { member ->
+                val user = usersById[member.userId] ?: return@mapNotNull null
                 TeamMemberResponse(
                     memberId = member.id,
                     name = user.name,
