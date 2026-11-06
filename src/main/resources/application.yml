@@ -47,3 +47,11 @@ management:
     web:
       exposure:
         include: health
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  flyway:
+    locations: classpath:db/migration,classpath:db/dev

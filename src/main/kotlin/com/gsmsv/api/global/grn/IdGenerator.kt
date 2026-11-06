@@ -22,6 +22,8 @@ object IdGenerator {
 
     fun teamId(): String = generate(IdPattern.TEAM_PREFIX, IdPattern.LONG_LENGTH)
 
+    fun teamMemberId(): String = generate(IdPattern.TEAM_MEMBER_PREFIX, IdPattern.LONG_LENGTH)
+
     private fun generate(
         prefix: String,
         length: Int,
