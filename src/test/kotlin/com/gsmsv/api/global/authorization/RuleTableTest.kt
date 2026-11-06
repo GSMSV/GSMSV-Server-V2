@@ -8,6 +8,7 @@ class RuleTableTest {
     private val leaderOnlyActions =
         setOf(
             Action.INVITE_MEMBER,
+            Action.RESUBMIT_TEAM,
             Action.REMOVE_MEMBER,
             Action.GRANT_DEVOPS,
             Action.DISBAND_TEAM,
