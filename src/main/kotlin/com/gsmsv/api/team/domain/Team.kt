@@ -16,30 +16,30 @@ class Team(
     @Id
     @Column(length = 17, nullable = false)
     override val id: String,
-    name: String,
-    status: TeamStatus = TeamStatus.PENDING,
-    rejectionReason: String? = null,
-    createdAt: Instant = Instant.now(),
-    updatedAt: Instant = createdAt,
+    initialName: String,
+    initialStatus: TeamStatus = TeamStatus.PENDING,
+    initialRejectionReason: String? = null,
+    initialCreatedAt: Instant = Instant.now(),
+    initialUpdatedAt: Instant = initialCreatedAt,
 ) : TeamResource {
     @Column(nullable = false)
-    final var name: String = name
+    final var name: String = initialName
         private set
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    final var status: TeamStatus = status
+    final var status: TeamStatus = initialStatus
         private set
 
     @Column(name = "rejection_reason")
-    final var rejectionReason: String? = rejectionReason
+    final var rejectionReason: String? = initialRejectionReason
         private set
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: Instant = createdAt
+    val createdAt: Instant = initialCreatedAt
 
     @Column(name = "updated_at", nullable = false)
-    final var updatedAt: Instant = updatedAt
+    final var updatedAt: Instant = initialUpdatedAt
         private set
 
     override val approved: Boolean

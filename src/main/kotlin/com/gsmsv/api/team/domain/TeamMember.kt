@@ -18,11 +18,11 @@ class TeamMember(
     val teamId: String,
     @Column(name = "user_id", length = 17, nullable = false)
     val userId: String,
-    role: TeamRole,
+    initialRole: TeamRole,
 ) {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    final var role: TeamRole = role
+    final var role: TeamRole = initialRole
         private set
 
     fun changeRole(role: TeamRole) {
