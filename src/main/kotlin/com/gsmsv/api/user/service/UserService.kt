@@ -4,6 +4,7 @@ import com.gsmsv.api.global.grn.IdGenerator
 import com.gsmsv.api.global.security.Role
 import com.gsmsv.api.user.domain.User
 import com.gsmsv.api.user.domain.UserStatus
+import com.gsmsv.api.user.dto.UserSummary
 import com.gsmsv.api.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,6 +13,12 @@ import org.springframework.transaction.annotation.Transactional
 class UserService(
     private val userRepository: UserRepository,
 ) {
+    @Transactional(readOnly = true)
+    fun findSummariesByIds(userIds: Collection<String>): Map<String, UserSummary> =
+        userRepository
+            .findAllById(userIds)
+            .associate { user -> user.id to UserSummary(user.id, user.name, user.email) }
+
     @Transactional
     fun findOrCreateFromDataGsm(
         dataGsmId: String,
