@@ -54,7 +54,7 @@ class VmPersistenceTest
         fun `삭제 표시가 된 VM은 조회와 목록에서 빠진다`() {
             val creatorId = saveUser()
             val vm = saveVm(Owner.User(creatorId), creatorId)
-            vm.markActive("10.0.0.5")
+            vm.markActive("192.0.2.5")
             vm.startDeleting()
             vm.markDeleted()
             vmRepository.saveAndFlush(vm)

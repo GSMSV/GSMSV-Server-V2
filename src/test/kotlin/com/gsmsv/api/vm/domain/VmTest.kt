@@ -27,11 +27,11 @@ class VmTest {
     fun `만들기를 마치면 내부 IP를 받고 사용 중이 된다`() {
         val vm = newVm()
 
-        vm.markActive("10.0.0.5")
+        vm.markActive("192.0.2.5")
 
         assertEquals(VmStatus.ACTIVE, vm.status)
-        assertEquals("10.0.0.5", vm.internalIp)
-        assertFailsWith<IllegalStateException> { vm.markActive("10.0.0.6") }
+        assertEquals("192.0.2.5", vm.internalIp)
+        assertFailsWith<IllegalStateException> { vm.markActive("192.0.2.6") }
     }
 
     @Test
@@ -47,7 +47,7 @@ class VmTest {
     @Test
     fun `정지된 VM을 연장하면 사용 중으로 돌아가고 만료는 앞으로만 늘린다`() {
         val vm = newVm()
-        vm.markActive("10.0.0.5")
+        vm.markActive("192.0.2.5")
         vm.suspend()
         val later = EXPIRES_AT.plusSeconds(3600)
 
@@ -61,7 +61,7 @@ class VmTest {
     @Test
     fun `삭제는 삭제 중을 거쳐야 하고 삭제 시각만 남긴다`() {
         val vm = newVm()
-        vm.markActive("10.0.0.5")
+        vm.markActive("192.0.2.5")
         assertFailsWith<IllegalStateException> { vm.markDeleted() }
 
         vm.startDeleting()
