@@ -1,6 +1,8 @@
 package com.gsmsv.api.notification.service
 
 import com.gsmsv.api.global.authorization.Owner
+import com.gsmsv.api.global.exception.BusinessException
+import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.notification.domain.Notification
 import com.gsmsv.api.notification.domain.NotificationCategory
 import com.gsmsv.api.notification.repository.NotificationRepository
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -110,6 +113,62 @@ class NotificationServiceTest {
 
         assertNull(saved.captured.resourceGrn)
         assertNull(saved.captured.resourceName)
+    }
+
+    @Test
+    fun `목록은 최근 순 알림과 읽지 않은 개수를 돌려준다`() {
+        every {
+            notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(USER_ID, PageRequest.of(0, NotificationService.MAX_PER_USER))
+        } returns listOf(notification("ntf-aaaaaaaa"))
+        every { notificationRepository.countByUserIdAndReadFalse(USER_ID) } returns 3
+
+        val response = service.list(USER_ID)
+
+        assertEquals(listOf("ntf-aaaaaaaa"), response.items.map { it.id })
+        assertEquals(3, response.unreadCount)
+    }
+
+    @Test
+    fun `읽음 처리하면 알림이 읽은 상태가 된다`() {
+        val target = notification("ntf-aaaaaaaa")
+        every { notificationRepository.findByIdAndUserId("ntf-aaaaaaaa", USER_ID) } returns target
+
+        service.markRead(USER_ID, "ntf-aaaaaaaa")
+        service.markRead(USER_ID, "ntf-aaaaaaaa")
+
+        assertTrue(target.read)
+    }
+
+    @Test
+    fun `남의 알림이거나 없으면 읽음·삭제 모두 RESOURCE_NOT_FOUND다`() {
+        every { notificationRepository.findByIdAndUserId("ntf-aaaaaaaa", USER_ID) } returns null
+
+        assertEquals(
+            ErrorCode.RESOURCE_NOT_FOUND,
+            assertFailsWith<BusinessException> { service.markRead(USER_ID, "ntf-aaaaaaaa") }.errorCode,
+        )
+        assertEquals(
+            ErrorCode.RESOURCE_NOT_FOUND,
+            assertFailsWith<BusinessException> { service.delete(USER_ID, "ntf-aaaaaaaa") }.errorCode,
+        )
+        verify(exactly = 0) { notificationRepository.delete(any()) }
+    }
+
+    @Test
+    fun `삭제하면 본인 알림을 지운다`() {
+        val target = notification("ntf-aaaaaaaa")
+        every { notificationRepository.findByIdAndUserId("ntf-aaaaaaaa", USER_ID) } returns target
+
+        service.delete(USER_ID, "ntf-aaaaaaaa")
+
+        verify { notificationRepository.delete(target) }
+    }
+
+    @Test
+    fun `모두 읽음 처리는 요청자 알림만 대상으로 한다`() {
+        service.markAllRead(USER_ID)
+
+        verify { notificationRepository.markAllReadByUserId(USER_ID) }
     }
 
     private fun notification(id: String) = Notification(id, USER_ID, message.category.kind, message.category, message.title, message.body)
