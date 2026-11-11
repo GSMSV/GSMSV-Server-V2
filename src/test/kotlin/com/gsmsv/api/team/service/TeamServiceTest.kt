@@ -42,6 +42,17 @@ class TeamServiceTest {
         )
     }
 
+    @Test
+    fun `팀원 전원의 사용자 id를 조회한다`() {
+        every { teamMemberRepository.findAllByTeamId(TEAM_ID) } returns
+            listOf(
+                TeamMember(MEMBER_ID, TEAM_ID, USER_ID, TeamRole.LEADER),
+                TeamMember(OTHER_MEMBER_ID, TEAM_ID, "user-b2c3d4e5f6g7", TeamRole.MEMBER),
+            )
+
+        assertEquals(listOf(USER_ID, "user-b2c3d4e5f6g7"), teamService.findMemberUserIds(TEAM_ID))
+    }
+
     companion object {
         private const val USER_ID = "user-a1b2c3d4e5f6"
         private const val TEAM_ID = "team-c3d4e5f6g7h8"

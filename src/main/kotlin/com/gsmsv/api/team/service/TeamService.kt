@@ -27,4 +27,8 @@ class TeamService(
     @Transactional(readOnly = true)
     override fun findMemberships(userId: String): Map<String, TeamRole> =
         teamMemberRepository.findAllByUserId(userId).associate { it.teamId to it.role }
+
+    /** 팀원 전원의 사용자 id. 알림처럼 팀 앞으로 온 일을 팀원에게 나눌 때 쓴다 */
+    @Transactional(readOnly = true)
+    fun findMemberUserIds(teamId: String): List<String> = teamMemberRepository.findAllByTeamId(teamId).map { it.userId }
 }
