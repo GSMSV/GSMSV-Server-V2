@@ -2,6 +2,7 @@ package com.gsmsv.api.app.service
 
 import com.gsmsv.api.app.domain.App
 import com.gsmsv.api.app.domain.AppOwnerType
+import com.gsmsv.api.app.repository.AppQuotaLock
 import com.gsmsv.api.app.repository.AppRepository
 import com.gsmsv.api.global.authorization.Owner
 import com.gsmsv.api.global.authorization.PermissionsResolver
@@ -26,9 +27,10 @@ import kotlin.test.assertTrue
 
 class AppCommandServiceTest {
     private val repository = mockk<AppRepository>()
+    private val quotaLock = mockk<AppQuotaLock>(relaxed = true)
     private val userService = mockk<UserService>()
     private val permissionsResolver = mockk<PermissionsResolver>()
-    private val service = AppCommandService(repository, userService, permissionsResolver)
+    private val service = AppCommandService(repository, quotaLock, userService, permissionsResolver)
     private val user = AuthenticatedUser(USER_ID, Role.USER)
 
     init {
@@ -71,6 +73,7 @@ class AppCommandServiceTest {
         val response = service.createTeamApp(user, team, "앱")
         val saved = slot<App>()
         verify { repository.countByOwnerTypeAndOwnerId(AppOwnerType.TEAM, TEAM_ID) }
+        verify { quotaLock.lock(AppOwnerType.TEAM, TEAM_ID) }
         verify { repository.save(capture(saved)) }
 
         assertEquals(Owner.Team(TEAM_ID), saved.captured.owner)

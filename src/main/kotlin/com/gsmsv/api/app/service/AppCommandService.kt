@@ -3,6 +3,7 @@ package com.gsmsv.api.app.service
 import com.gsmsv.api.app.domain.App
 import com.gsmsv.api.app.domain.AppOwnerType
 import com.gsmsv.api.app.dto.CreateAppResponse
+import com.gsmsv.api.app.repository.AppQuotaLock
 import com.gsmsv.api.app.repository.AppRepository
 import com.gsmsv.api.global.authorization.Action
 import com.gsmsv.api.global.authorization.Owner
@@ -24,6 +25,7 @@ import java.time.Instant
 @Service
 class AppCommandService(
     private val appRepository: AppRepository,
+    private val quotaLock: AppQuotaLock,
     private val userService: UserService,
     private val permissionsResolver: PermissionsResolver,
 ) {
@@ -60,6 +62,7 @@ class AppCommandService(
             )
         }
         val ownerType = if (owner is Owner.User) AppOwnerType.USER else AppOwnerType.TEAM
+        quotaLock.lock(ownerType, owner.id)
         if (appRepository.countByOwnerTypeAndOwnerId(ownerType, owner.id) >= limit) {
             throw BusinessException(ErrorCode.QUOTA_EXCEEDED)
         }

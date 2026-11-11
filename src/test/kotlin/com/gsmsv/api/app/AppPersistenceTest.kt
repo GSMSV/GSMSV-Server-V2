@@ -4,6 +4,7 @@ import com.gsmsv.api.TestcontainersConfiguration
 import com.gsmsv.api.app.domain.App
 import com.gsmsv.api.app.domain.AppOwnerType
 import com.gsmsv.api.app.repository.AppEnvironmentRepository
+import com.gsmsv.api.app.repository.AppQuotaLock
 import com.gsmsv.api.app.repository.AppRepository
 import com.gsmsv.api.app.repository.AppResourceReader
 import com.gsmsv.api.global.authorization.Action
@@ -40,6 +41,7 @@ class AppPersistenceTest
     @Autowired
     constructor(
         private val appRepository: AppRepository,
+        private val quotaLock: AppQuotaLock,
         private val environmentRepository: AppEnvironmentRepository,
         private val reader: AppResourceReader,
         private val loader: ServiceResourceLoader,
@@ -100,6 +102,7 @@ class AppPersistenceTest
 
         @Test
         fun `같은 소유자의 앱은 같은 이름으로 두 개 저장할 수 있다`() {
+            quotaLock.lock(AppOwnerType.USER, USER_ID)
             val first = appRepository.saveAndFlush(app(Owner.User(USER_ID), "같은 이름"))
             val second = appRepository.saveAndFlush(app(Owner.User(USER_ID), "같은 이름"))
 
