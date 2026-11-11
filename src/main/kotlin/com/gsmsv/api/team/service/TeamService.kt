@@ -50,6 +50,6 @@ class TeamService(
         }
         if (team.status != TeamStatus.REJECTED) throw BusinessException(ErrorCode.CONFLICT)
         team.resubmit(normalizedName)
-        return team
+        return teamRepository.save(team)
     }
 }

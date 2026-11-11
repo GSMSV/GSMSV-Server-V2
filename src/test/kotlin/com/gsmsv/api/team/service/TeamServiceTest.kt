@@ -61,12 +61,15 @@ class TeamServiceTest {
     @Test
     fun `거절된 팀은 이름을 다듬어 다시 신청한다`() {
         val team = Team(TEAM_ID, "기존 팀", TeamStatus.REJECTED, "사유")
+        every { teamRepository.save(team) } returns team
 
-        teamService.resubmit(team, "  새 팀  ")
+        val resubmitted = teamService.resubmit(team, "  새 팀  ")
 
+        assertEquals(team, resubmitted)
         assertEquals(TeamStatus.PENDING, team.status)
         assertEquals("새 팀", team.name)
         assertEquals("사유", team.rejectionReason)
+        verify(exactly = 1) { teamRepository.save(team) }
     }
 
     @Test
