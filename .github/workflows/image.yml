@@ -1,0 +1,43 @@
+name: 이미지
+
+on:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: 이미지 빌드·GHCR 업로드
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # 이미지 업로드에만 packages 쓰기 권한을 준다
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # 공식 액션(actions/*)만 허용돼 있어 docker/* 액션 대신 docker CLI를 쓴다
+      - name: GHCR 로그인
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+      # 태그는 커밋 SHA다. 어떤 커밋이 배포됐는지 알 수 있고 이전 SHA로 되돌릴 수 있다
+      - name: 이미지 빌드·업로드
+        env:
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          IMAGE="ghcr.io/${REPOSITORY,,}:${COMMIT_SHA}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
