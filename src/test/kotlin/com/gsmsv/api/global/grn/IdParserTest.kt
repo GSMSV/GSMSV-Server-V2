@@ -42,6 +42,17 @@ class IdParserTest {
     }
 
     @Test
+    fun `맞는 알림 id는 그대로 돌려준다`() {
+        assertEquals("ntf-4k8m2q9t", IdParser.requireNotificationId("ntf-4k8m2q9t"))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["", "ntf-4k8m2q9", "ntf-4k8m2q9tx", "ntf-4k8m2q9l", "NTF-4k8m2q9t", "snap-7qz3m8k2", "ntf-4k8m2q9t\n"])
+    fun `틀린 알림 id는 INVALID_RESOURCE_ID로 거절한다`(id: String) {
+        assertEquals(ErrorCode.INVALID_RESOURCE_ID, assertThrows<BusinessException> { IdParser.requireNotificationId(id) }.errorCode)
+    }
+
+    @Test
     fun `맞는 하위 자원 id는 접두사 10종 모두 종류와 함께 돌려준다`() {
         val examples =
             mapOf(
