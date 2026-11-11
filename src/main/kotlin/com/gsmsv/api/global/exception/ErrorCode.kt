@@ -19,6 +19,7 @@ enum class ErrorCode(
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 동작을 할 권한이 없습니다."),
     TEAM_NOT_APPROVED(HttpStatus.FORBIDDEN, "승인되지 않은 팀은 이 동작을 할 수 없습니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자원을 찾을 수 없습니다."),
+    CONFLICT(HttpStatus.CONFLICT, "현재 상태에서는 요청을 처리할 수 없습니다."),
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 API가 없습니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "이 API에서 지원하지 않는 HTTP 메서드입니다."),
     UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 Content-Type입니다."),

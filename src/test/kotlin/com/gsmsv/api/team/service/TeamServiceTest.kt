@@ -1,7 +1,11 @@
 package com.gsmsv.api.team.service
 
 import com.gsmsv.api.global.authorization.TeamRole
+import com.gsmsv.api.global.exception.BusinessException
+import com.gsmsv.api.global.exception.ErrorCode
+import com.gsmsv.api.team.domain.Team
 import com.gsmsv.api.team.domain.TeamMember
+import com.gsmsv.api.team.domain.TeamStatus
 import com.gsmsv.api.team.repository.TeamMemberRepository
 import com.gsmsv.api.team.repository.TeamRepository
 import io.mockk.every
@@ -9,6 +13,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class TeamServiceTest {
     private val teamRepository = mockk<TeamRepository>()
@@ -51,6 +56,35 @@ class TeamServiceTest {
             )
 
         assertEquals(listOf(USER_ID, "user-b2c3d4e5f6g7"), teamService.findMemberUserIds(TEAM_ID))
+    }
+
+    @Test
+    fun `거절된 팀은 이름을 다듬어 다시 신청한다`() {
+        val team = Team(TEAM_ID, "기존 팀", TeamStatus.REJECTED, "사유")
+
+        teamService.resubmit(team, "  새 팀  ")
+
+        assertEquals(TeamStatus.PENDING, team.status)
+        assertEquals("새 팀", team.name)
+        assertEquals("사유", team.rejectionReason)
+    }
+
+    @Test
+    fun `거절 상태가 아니면 다시 신청할 수 없다`() {
+        val team = Team(TEAM_ID, "기존 팀")
+
+        val exception = assertFailsWith<BusinessException> { teamService.resubmit(team, null) }
+
+        assertEquals(ErrorCode.CONFLICT, exception.errorCode)
+    }
+
+    @Test
+    fun `이름을 수정할 때 공백 제거 뒤 길이를 검사한다`() {
+        val team = Team(TEAM_ID, "기존 팀", TeamStatus.REJECTED, "사유")
+
+        val exception = assertFailsWith<BusinessException> { teamService.resubmit(team, "   ") }
+
+        assertEquals(ErrorCode.VALIDATION_FAILED, exception.errorCode)
     }
 
     companion object {
