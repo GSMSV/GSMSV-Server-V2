@@ -92,21 +92,24 @@ AGENTS.md 1.2의 PR 제목 형식으로 쓴다. 타입은 **브랜치 타입**�
 gh pr create --base develop --head <브랜치> \
   --title "feat(vm): VM 생성 API 추가" \
   --label enhancement \
+  --assignee @me \
   --body-file <임시 본문 파일>
 ```
 
 - `--base develop`은 항상 명시한다
+- `--assignee @me`로 PR을 연 사람(지금 `gh`에 로그인한 계정)을 담당자로 둔다
 - 사용자가 "작업 중", "draft"라고 하면 `--draft`를 붙인다
 - `check-git-format.mjs` hook이 제목을 검사한다. 막히면 메시지대로 고쳐 다시 실행한다
 
 만든 뒤 확인한다.
 
 ```bash
-gh pr view --json url,baseRefName,title,labels
+gh pr view --json url,baseRefName,title,labels,assignees
 ```
 
-base가 `develop`이 아니면 `gh pr edit --base develop`으로 고친다.
+- base가 `develop`이 아니면 `gh pr edit --base develop`으로 고친다
+- 담당자가 비어 있으면 `gh pr edit --add-assignee @me`로 넣는다
 
 ## 10. 보고
 
-PR 링크, 제목, 라벨을 알려주고 **병합은 사람이 해야 한다**고 요청한다. develop 병합에는 CI 통과와 작성자가 아닌 1명의 승인이 필요하다는 점도 덧붙인다.
+PR 링크, 제목, 라벨, 담당자를 알려주고 **병합은 사람이 해야 한다**고 요청한다. develop 병합에는 CI 통과와 작성자가 아닌 1명의 승인이 필요하다는 점도 덧붙인다.
