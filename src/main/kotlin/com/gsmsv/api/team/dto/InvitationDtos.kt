@@ -20,3 +20,18 @@ data class InvitationResponse(
     val sentAt: Instant,
     val expiresAt: Instant,
 )
+
+data class AcceptInvitationRequest(
+    @field:NotBlank
+    val token: String,
+)
+
+data class AcceptInvitationResponse(
+    val team: InvitationTeamResponse,
+    val myRole: String = "member",
+)
+
+data class InvitationTeamResponse(
+    val id: String,
+    val name: String,
+)

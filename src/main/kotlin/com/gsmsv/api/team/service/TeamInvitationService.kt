@@ -3,6 +3,7 @@ package com.gsmsv.api.team.service
 import com.gsmsv.api.global.authorization.Action
 import com.gsmsv.api.global.authorization.Actor
 import com.gsmsv.api.global.authorization.TeamLoader
+import com.gsmsv.api.global.authorization.TeamRole
 import com.gsmsv.api.global.exception.BusinessException
 import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.global.grn.IdGenerator
@@ -14,7 +15,9 @@ import com.gsmsv.api.team.config.SchoolEmailProperties
 import com.gsmsv.api.team.domain.Team
 import com.gsmsv.api.team.domain.TeamInvitation
 import com.gsmsv.api.team.domain.TeamStatus
+import com.gsmsv.api.team.dto.AcceptInvitationResponse
 import com.gsmsv.api.team.dto.InvitationResponse
+import com.gsmsv.api.team.dto.InvitationTeamResponse
 import com.gsmsv.api.team.repository.TeamInvitationRepository
 import com.gsmsv.api.user.service.UserService
 import org.springframework.dao.DataIntegrityViolationException
@@ -108,6 +111,33 @@ class TeamInvitationService(
             throw BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
         }
         invitation.cancel(Instant.now())
+    }
+
+    @Transactional
+    fun accept(
+        userId: String,
+        token: String,
+    ): AcceptInvitationResponse {
+        val invitation =
+            invitationRepository.findByTokenHashForUpdate(hashToken(token))
+                ?: throw BusinessException(ErrorCode.GONE)
+        val now = Instant.now()
+        if (invitation.acceptedAt != null || invitation.canceledAt != null || !invitation.expiresAt.isAfter(now)) {
+            throw BusinessException(ErrorCode.GONE)
+        }
+
+        val user = userService.findById(userId) ?: throw BusinessException(ErrorCode.UNAUTHENTICATED)
+        if (user.email.trim().lowercase() != invitation.email.trim().lowercase()) {
+            throw BusinessException(ErrorCode.INVITATION_EMAIL_MISMATCH)
+        }
+        if (teamService.findRole(invitation.teamId, userId) != null) {
+            throw BusinessException(ErrorCode.ALREADY_MEMBER)
+        }
+        val team = teamService.findById(invitation.teamId) ?: throw BusinessException(ErrorCode.GONE)
+
+        teamService.addMember(team.id, userId, TeamRole.MEMBER)
+        invitation.accept(now)
+        return AcceptInvitationResponse(InvitationTeamResponse(team.id, team.name))
     }
 
     private fun validateEmail(email: String) {
