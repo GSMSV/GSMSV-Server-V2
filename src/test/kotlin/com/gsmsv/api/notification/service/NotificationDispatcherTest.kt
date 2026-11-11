@@ -20,13 +20,13 @@ class NotificationDispatcherTest {
     private val dispatcher = NotificationDispatcher(listOf(email, discord), settingRepository)
 
     @Test
-    fun `설정이 없으면 이메일만 보낸다`() {
+    fun `설정이 없으면 모든 채널로 보낸다`() {
         every { settingRepository.findAllByIdUserId(USER_ID) } returns emptyList()
 
         dispatcher.dispatch(event(NotificationCategory.DB_STORAGE_80))
 
         assertEquals(1, email.sent.size)
-        assertEquals(0, discord.sent.size)
+        assertEquals(1, discord.sent.size)
     }
 
     @Test
