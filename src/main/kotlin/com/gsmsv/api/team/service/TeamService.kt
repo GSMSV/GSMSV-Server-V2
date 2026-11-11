@@ -3,11 +3,14 @@ package com.gsmsv.api.team.service
 import com.gsmsv.api.global.authorization.TeamMembershipReader
 import com.gsmsv.api.global.authorization.TeamReader
 import com.gsmsv.api.global.authorization.TeamRole
+import com.gsmsv.api.global.exception.BusinessException
+import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.global.grn.IdGenerator
 import com.gsmsv.api.team.domain.Team
 import com.gsmsv.api.team.domain.TeamMember
 import com.gsmsv.api.team.repository.TeamMemberRepository
 import com.gsmsv.api.team.repository.TeamRepository
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -40,6 +43,13 @@ class TeamService(
         userId: String,
         role: TeamRole,
     ) {
-        teamMemberRepository.save(TeamMember(IdGenerator.teamMemberId(), teamId, userId, role))
+        if (teamMemberRepository.existsByTeamIdAndUserId(teamId, userId)) {
+            throw BusinessException(ErrorCode.ALREADY_MEMBER)
+        }
+        try {
+            teamMemberRepository.saveAndFlush(TeamMember(IdGenerator.teamMemberId(), teamId, userId, role))
+        } catch (_: DataIntegrityViolationException) {
+            throw BusinessException(ErrorCode.ALREADY_MEMBER)
+        }
     }
 }
