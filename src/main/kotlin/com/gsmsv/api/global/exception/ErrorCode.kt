@@ -21,5 +21,7 @@ enum class ErrorCode(
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 API가 없습니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "이 API에서 지원하지 않는 HTTP 메서드입니다."),
     UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 Content-Type입니다."),
+    GATEWAY_SYNC_FAILED(HttpStatus.BAD_GATEWAY, "게이트웨이 반영에 실패했습니다."),
+    UPSTREAM_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "가상화 서버가 응답하지 않습니다."),
     INTERNAL(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
 }
