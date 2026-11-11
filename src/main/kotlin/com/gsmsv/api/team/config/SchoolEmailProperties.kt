@@ -8,5 +8,5 @@ import org.springframework.validation.annotation.Validated
 @ConfigurationProperties("gsmsv.team")
 data class SchoolEmailProperties(
     @field:NotBlank
-    val emailDomain: String = "",
+    val emailDomain: String,
 )

@@ -21,6 +21,8 @@ import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Instant
@@ -64,7 +66,7 @@ class TeamInvitationService(
         } catch (_: DataIntegrityViolationException) {
             throw BusinessException(ErrorCode.CONFLICT)
         }
-        mailSender.send(normalizedEmail, token)
+        sendAfterCommit(normalizedEmail, token)
     }
 
     @Transactional(readOnly = true)
@@ -110,9 +112,26 @@ class TeamInvitationService(
 
     private fun validateEmail(email: String) {
         val domain = schoolEmailProperties.emailDomain.trim().lowercase()
-        if (domain.isBlank() || email.substringAfterLast('@', "").lowercase() != domain) {
+        if (domain.isBlank() || email.substringAfterLast('@').lowercase() != domain) {
             throw BusinessException(ErrorCode.VALIDATION_FAILED)
         }
+    }
+
+    private fun sendAfterCommit(
+        email: String,
+        token: String,
+    ) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            mailSender.send(email, token)
+            return
+        }
+        TransactionSynchronizationManager.registerSynchronization(
+            object : TransactionSynchronization {
+                override fun afterCommit() {
+                    mailSender.send(email, token)
+                }
+            },
+        )
     }
 
     private fun newToken(): String =
