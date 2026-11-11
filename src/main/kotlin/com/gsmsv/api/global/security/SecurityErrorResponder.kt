@@ -39,6 +39,13 @@ class SecurityErrorResponder(
         accessDeniedException: AccessDeniedException,
     ) = write(request, response, ErrorCode.ACCESS_DENIED)
 
+    /** 보안 필터 단계에서 controller 없이 오류를 돌려줄 때 쓴다 */
+    fun respond(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        errorCode: ErrorCode,
+    ) = write(request, response, errorCode)
+
     private fun write(
         request: HttpServletRequest,
         response: HttpServletResponse,

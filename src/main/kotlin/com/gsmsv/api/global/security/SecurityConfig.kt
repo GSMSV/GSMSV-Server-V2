@@ -1,11 +1,15 @@
 package com.gsmsv.api.global.security
 
+import com.gsmsv.api.global.idempotency.IdempotencyFilter
+import com.gsmsv.api.global.idempotency.IdempotencyStore
 import jakarta.servlet.DispatcherType
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
@@ -23,6 +27,7 @@ class SecurityConfig : WebMvcConfigurer {
         http: HttpSecurity,
         tokenProvider: AccessTokenProvider,
         errorResponder: SecurityErrorResponder,
+        idempotencyStore: ObjectProvider<IdempotencyStore>,
     ): SecurityFilterChain =
         http
             .statelessApi()
@@ -42,6 +47,11 @@ class SecurityConfig : WebMvcConfigurer {
             }.exceptionHandling {
                 it.authenticationEntryPoint(errorResponder)
                 it.accessDeniedHandler(errorResponder)
+            }.also { security ->
+                // 저장소가 없는 테스트 슬라이스에서는 멱등성 처리를 켜지 않는다
+                idempotencyStore.ifAvailable?.let {
+                    security.addFilterAfter(IdempotencyFilter(it, errorResponder), BearerTokenAuthenticationFilter::class.java)
+                }
             }.build()
 
     override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
