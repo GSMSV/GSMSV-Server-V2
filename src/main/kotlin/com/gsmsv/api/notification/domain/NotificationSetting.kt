@@ -45,6 +45,6 @@ class NotificationSetting(
 
     companion object {
         const val DEFAULT_EMAIL = true
-        const val DEFAULT_DISCORD = false
+        const val DEFAULT_DISCORD = true
     }
 }

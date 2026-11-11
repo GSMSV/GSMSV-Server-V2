@@ -9,6 +9,7 @@ enum class ErrorCode(
 ) {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "요청 형식이 올바르지 않습니다."),
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
+    LOCKED_CATEGORY(HttpStatus.BAD_REQUEST, "끌 수 없는 필수 알림입니다."),
     UNKNOWN_FIELD(HttpStatus.BAD_REQUEST, "알 수 없는 필드가 있습니다."),
     INVALID_CURSOR(HttpStatus.BAD_REQUEST, "커서 형식이 올바르지 않습니다."),
     INVALID_GRN(HttpStatus.BAD_REQUEST, "GRN 형식이 올바르지 않습니다."),
