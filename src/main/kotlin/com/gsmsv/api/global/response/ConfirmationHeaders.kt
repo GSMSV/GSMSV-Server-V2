@@ -37,7 +37,8 @@ object ConfirmationHeaders {
         val decoded =
             try {
                 UriUtils.decode(header, StandardCharsets.UTF_8)
-            } catch (_: IllegalArgumentException) {
+            } catch (_: Exception) {
+                // 디코딩 실패는 종류와 관계없이 잘못된 입력이므로 500이 아니라 400으로 돌려준다
                 throw BusinessException(ErrorCode.VALIDATION_FAILED, mapOf("header" to headerName))
             }
         // 응답에 기대값을 싣지 않는다. 요청자가 모르는 자원 정보가 새면 안 된다
