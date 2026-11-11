@@ -71,3 +71,21 @@ ktlint {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+// Testcontainers를 쓰는 통합 테스트(@Tag("integration"))는 test에서 빼고 integrationTest로만 돌린다
+tasks.test {
+    useJUnitPlatform {
+        excludeTags("integration")
+    }
+}
+
+tasks.register<Test>("integrationTest") {
+    description = "@Tag(\"integration\") 통합 테스트만 돌린다 (Docker 필요)"
+    group = "verification"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform {
+        includeTags("integration")
+    }
+    shouldRunAfter(tasks.test)
+}
