@@ -31,6 +31,11 @@ gsmsv:
       # Base64로 인코딩한 32바이트 이상의 무작위 값. 환경 변수로만 받고 기본값을 두지 않는다 (예: openssl rand -base64 32)
       secret: ${JWT_SECRET}
       access-token-ttl: 15m
+  datagsm:
+    # DataGSM OAuth 클라이언트 등록 정보 (https://docs.datagsm.kr/oauth). 환경 변수로만 받고 기본값을 두지 않는다. 비어 있으면 기동에 실패한다
+    client-id: ${DATAGSM_CLIENT_ID}
+    client-secret: ${DATAGSM_CLIENT_SECRET}
+    redirect-uri: ${DATAGSM_REDIRECT_URI}
   quota:
     # Contracts-V2 policies/quota.md 3·4장의 값이다. 배포 없이 바꿀 수 있게 프로필 설정이나 환경 변수로 덮어쓴다
     personal:
