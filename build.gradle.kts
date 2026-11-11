@@ -35,6 +35,8 @@ dependencies {
     implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
+    // 공유 DB 서버(MySQL)에 database·계정을 만들 때만 쓴다. 앱 자체 DB는 PostgreSQL이다
+    runtimeOnly("com.mysql:mysql-connector-j")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
@@ -46,6 +48,7 @@ dependencies {
     testImplementation("com.ninja-squad:springmockk:5.0.1")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-postgresql")
+    testImplementation("org.testcontainers:testcontainers-mysql")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
