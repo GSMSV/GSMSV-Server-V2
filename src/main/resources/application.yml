@@ -51,6 +51,14 @@ gsmsv:
     storage-limit:
       personal-gib: 1
       team-gib: 2
+  infra:
+    # Go 내부 API 연결 설정. 값은 환경 변수로만 받고 기본값에 실제 값을 두지 않는다 (dev·local은 모의 구현이라 비어 있어도 된다)
+    base-url: ${INFRA_BASE_URL:}
+    shared-secret: ${INFRA_SHARED_SECRET:}
+    # 공유 시크릿을 실어 보내는 헤더 이름. Go 담당과 정하기 전까지의 임시 값이다 (#80 미정 항목)
+    secret-header: X-Internal-Secret
+    connect-timeout: 2s
+    read-timeout: 10s
 
 management:
   endpoints:
