@@ -18,6 +18,8 @@ enum class ErrorCode(
     OAUTH_STATE_INVALID(HttpStatus.BAD_REQUEST, "로그인 요청을 확인하지 못했습니다. 다시 시도해 주세요."),
     OAUTH_EXCHANGE_FAILED(HttpStatus.BAD_REQUEST, "DataGSM 인증을 확인하지 못했습니다."),
     UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
+    NOT_ENROLLED(HttpStatus.FORBIDDEN, "재학생이 아니어서 로그인할 수 없습니다."),
+    ACCOUNT_INACTIVE(HttpStatus.FORBIDDEN, "비활성화된 계정입니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 동작을 할 권한이 없습니다."),
     TEAM_NOT_APPROVED(HttpStatus.FORBIDDEN, "승인되지 않은 팀은 이 동작을 할 수 없습니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자원을 찾을 수 없습니다."),
