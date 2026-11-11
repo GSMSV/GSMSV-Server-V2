@@ -123,7 +123,10 @@ class JdbcMysqlProvisionerTest {
     private fun connect(
         id: String,
         password: String,
-    ) = DriverManager.getConnection(mysql.jdbcUrl, id, password)
+    ) = DriverManager.getConnection(urlOf(id), id, password)
+
+    // 기본 jdbcUrl은 test database를 가리켜 일반 계정은 접속 단계에서 거절된다. 계정 자신의 database로 접속한다
+    private fun urlOf(database: String) = "jdbc:mysql://${mysql.host}:${mysql.firstMappedPort}/$database"
 
     private fun execute(sql: String) {
         admin.connection.use { connection -> connection.createStatement().use { it.execute(sql) } }
