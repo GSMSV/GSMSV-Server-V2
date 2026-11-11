@@ -2,6 +2,7 @@ package com.gsmsv.api.app
 
 import com.gsmsv.api.TestcontainersConfiguration
 import com.gsmsv.api.app.domain.App
+import com.gsmsv.api.app.domain.AppOwnerType
 import com.gsmsv.api.app.repository.AppEnvironmentRepository
 import com.gsmsv.api.app.repository.AppRepository
 import com.gsmsv.api.app.repository.AppResourceReader
@@ -20,7 +21,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.context.request.RequestContextHolder
 import java.time.Instant
 import kotlin.test.assertEquals
@@ -41,6 +45,7 @@ class AppPersistenceTest
         private val loader: ServiceResourceLoader,
         private val entityManager: EntityManager,
         private val jdbcTemplate: JdbcTemplate,
+        private val transactionManager: PlatformTransactionManager,
     ) {
         @Test
         fun `앱과 기본 production 환경을 저장하고 GRN 로더로 조회한다`() {
@@ -91,6 +96,34 @@ class AppPersistenceTest
                     "production",
                 )
             }
+        }
+
+        @Test
+        fun `같은 소유자의 앱은 같은 이름으로 두 개 저장할 수 있다`() {
+            val first = appRepository.saveAndFlush(app(Owner.User(USER_ID), "같은 이름"))
+            val second = appRepository.saveAndFlush(app(Owner.User(USER_ID), "같은 이름"))
+
+            assertEquals(2, appRepository.countByOwnerTypeAndOwnerId(AppOwnerType.USER, USER_ID))
+            assertEquals(1, environmentRepository.countByAppId(first.id))
+            assertEquals(1, environmentRepository.countByAppId(second.id))
+        }
+
+        @Test
+        fun `앱 저장 트랜잭션이 실패하면 기본 환경도 함께 롤백한다`() {
+            val app = app(Owner.User(USER_ID), "롤백 확인")
+            val transaction = TransactionTemplate(transactionManager)
+            transaction.propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+
+            assertFailsWith<IllegalStateException> {
+                transaction.executeWithoutResult {
+                    appRepository.saveAndFlush(app)
+                    assertEquals(1, environmentRepository.countByAppId(app.id))
+                    throw IllegalStateException("롤백 확인")
+                }
+            }
+
+            assertEquals(0, environmentRepository.countByAppId(app.id))
+            assertTrue(appRepository.findById(app.id).isEmpty)
         }
 
         private fun app(
