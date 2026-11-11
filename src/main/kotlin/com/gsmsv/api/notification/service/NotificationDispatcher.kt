@@ -8,8 +8,6 @@ import com.gsmsv.api.notification.domain.NotificationSetting
 import com.gsmsv.api.notification.repository.NotificationSettingRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Propagation
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
@@ -24,12 +22,14 @@ class NotificationDispatcher(
     private val channels: List<NotificationChannel>,
     private val settingRepository: NotificationSettingRepository,
 ) {
+    // 커밋이 끝난 뒤라 트랜잭션이 필요 없다. 설정 조회는 repository가 알아서 읽는다
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     fun dispatch(event: NotificationCreatedEvent) {
         event.deliveries.groupBy { it.userId }.forEach { (userId, deliveries) ->
-            val settings = loadSettings(userId) ?: return@forEach
-            deliveries.forEach { delivery -> sendThroughChannels(delivery, settings) }
+            val settings = loadSettings(userId)
+            // 설정을 못 읽으면 사용자 선택을 알 수 없으니, 설정과 상관없이 보내는 필수 그룹만 보낸다
+            val targets = if (settings == null) deliveries.filter { it.category.group.required } else deliveries
+            targets.forEach { delivery -> sendThroughChannels(delivery, settings.orEmpty()) }
         }
     }
 
@@ -37,7 +37,7 @@ class NotificationDispatcher(
         try {
             settingRepository.findAllByIdUserId(userId).associateBy { it.id.group }
         } catch (e: Exception) {
-            log.warn(e) { "알림 설정을 읽지 못해 외부 채널 발송을 건너뜁니다: userId=$userId" }
+            log.warn(e) { "알림 설정을 읽지 못해 필수 알림만 보냅니다: userId=$userId" }
             null
         }
 

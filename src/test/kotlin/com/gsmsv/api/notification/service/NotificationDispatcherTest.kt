@@ -63,12 +63,14 @@ class NotificationDispatcherTest {
     }
 
     @Test
-    fun `설정을 읽지 못해도 예외를 던지지 않는다`() {
+    fun `설정을 읽지 못하면 필수 그룹만 보낸다`() {
         every { settingRepository.findAllByIdUserId(USER_ID) } throws IllegalStateException("db down")
 
         dispatcher.dispatch(event(NotificationCategory.EXPIRY_1D))
+        dispatcher.dispatch(event(NotificationCategory.DB_STORAGE_80))
 
-        assertEquals(0, email.sent.size)
+        assertEquals(1, email.sent.size)
+        assertEquals(NotificationCategory.EXPIRY_1D, email.sent.single().category)
     }
 
     private fun event(category: NotificationCategory) =
