@@ -41,6 +41,16 @@ gsmsv:
       vcpu: 8
       ram-gib: 16
       ssd-gib: 60
+  database:
+    connection:
+      # 사용자에게 보여 주는 접속 주소다. 노드를 드러내지 않는 이름을 운영 환경 변수로 넣는다
+      host: ${DATABASE_CONNECTION_HOST:localhost}
+      port: 3306
+      tls: true
+    # 공유형 용량 한도 (Contracts-V2 services/database.md 7장). 소유자별 합계, GiB
+    storage-limit:
+      personal-gib: 1
+      team-gib: 2
 
 management:
   endpoints:
