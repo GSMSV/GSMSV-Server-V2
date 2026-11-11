@@ -154,6 +154,34 @@ class ServiceResourceLoaderTest {
     }
 
     @Test
+    fun `owner로 좁히면 볼 수 있는 그 소유자의 자원만 돌려준다`() {
+        val loader = loaderWithRole(TeamRole.MEMBER)
+
+        assertEquals(listOf(teamVm), loader.listVisible(UserActor(ME), reader, Owner.Team(TEAM)))
+        assertEquals(listOf(myVm), loader.listVisible(UserActor(ME), reader, Owner.User(ME)))
+        assertEquals(2, loader.listVisible(UserActor(ME), reader, null).size)
+    }
+
+    @Test
+    fun `볼 수 없는 소유자로 좁히면 빈 목록이 아니라 404다`() {
+        val loader = loaderWithRole(TeamRole.MEMBER)
+
+        assertEquals(
+            ErrorCode.RESOURCE_NOT_FOUND,
+            errorOf { loader.listVisible(UserActor(ME), reader, Owner.Team(OTHER_TEAM)) },
+        )
+        assertEquals(
+            ErrorCode.RESOURCE_NOT_FOUND,
+            errorOf { loader.listVisible(UserActor(ME), reader, Owner.User(OTHER_USER)) },
+        )
+    }
+
+    @Test
+    fun `관리자는 어느 소유자로도 좁힐 수 있다`() {
+        assertEquals(listOf(otherTeamVm), loader().listVisible(AdminActor(ME), reader, Owner.Team(OTHER_TEAM)))
+    }
+
+    @Test
     fun `listVisible은 SYSTEM에게 전체를 돌려준다`() {
         assertEquals(4, loader().listVisible(SystemActor, reader).size)
     }

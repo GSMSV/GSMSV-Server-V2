@@ -55,4 +55,21 @@ class ServiceResourceLoader(
         // 구현체가 다른 소유자의 자원을 섞어 돌려줘도 새지 않도록 한 번 더 거른다
         return reader.findAllByOwners(owners).filter { it.owner in owners }
     }
+
+    /**
+     * 목록을 [owner]의 자원으로만 좁힌다. [owner]가 [actor]가 볼 수 없는 소유자면 빈 목록이 아니라 404다
+     * (존재 여부를 드러내지 않는다). 좁히는 것은 [listVisible] 결과 안에서만 한다.
+     */
+    fun <T : OwnedResource> listVisible(
+        actor: Actor,
+        reader: ServiceResourceReader<T>,
+        owner: Owner?,
+    ): List<T> {
+        if (owner != null) {
+            val visibleOwners = policy.visibleOwners(actor)
+            if (visibleOwners != null && owner !in visibleOwners) throw BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
+        }
+        val visible = listVisible(actor, reader)
+        return if (owner == null) visible else visible.filter { it.owner == owner }
+    }
 }
