@@ -82,6 +82,17 @@ class TeamInvitationAcceptTest {
     }
 
     @Test
+    fun `동시 중복 멤버 등록 충돌이면 초대를 수락 처리하지 않는다`() {
+        prepareAccept()
+        every { teamService.addMember(team.id, user.id, TeamRole.MEMBER) } throws BusinessException(ErrorCode.ALREADY_MEMBER)
+
+        val exception = assertFailsWith<BusinessException> { service.accept(user.id, "secret-token") }
+
+        assertEquals(ErrorCode.ALREADY_MEMBER, exception.errorCode)
+        assertNull(invitation.acceptedAt)
+    }
+
+    @Test
     fun `만료된 초대는 gone으로 거절한다`() {
         val expired = TeamInvitation(invitation.id, team.id, user.email, "0".repeat(64), Instant.now(), Instant.now().minusSeconds(1))
         every { repository.findByTokenHashForUpdate(any()) } returns expired
