@@ -22,6 +22,7 @@ export JWT_SECRET=$(openssl rand -base64 32)   # 토큰 서명 키. 실제 값�
 export DATAGSM_CLIENT_ID=...                   # DataGSM OAuth 클라이언트 등록 정보. 비어 있으면 기동에 실패한다
 export DATAGSM_CLIENT_SECRET=...
 export DATAGSM_REDIRECT_URI=...                # DataGSM에 등록한 콜백 주소와 같아야 한다
+export AUTH_FRONTEND_URL=...                   # 로그인이 끝난 뒤 돌아갈 프론트 주소
 ./gradlew bootRun                              # 프로필을 주지 않으면 local
 ```
 
