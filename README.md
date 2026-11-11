@@ -22,6 +22,8 @@ export JWT_SECRET=$(openssl rand -base64 32)   # 토큰 서명 키. 실제 값�
 ./gradlew bootRun                              # 프로필을 주지 않으면 local
 ```
 
+팀 초대 API를 사용하려면 `SCHOOL_EMAIL_DOMAIN`에 학교 이메일 도메인을 설정한다. 값이 없으면 서버 설정 검증이 실패한다.
+
 로그인 없이 토큰을 받으려면 개발용 토큰 API를 쓴다. `local`·`dev` 프로필에서만 열린다.
 
 ```bash

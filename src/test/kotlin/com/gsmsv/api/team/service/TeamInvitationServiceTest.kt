@@ -1,14 +1,18 @@
 package com.gsmsv.api.team.service
 
 import com.gsmsv.api.global.authorization.Action
+import com.gsmsv.api.global.authorization.TeamRole
 import com.gsmsv.api.global.authorization.UserActor
 import com.gsmsv.api.global.exception.BusinessException
 import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.global.grn.IdGenerator
+import com.gsmsv.api.global.security.Role
 import com.gsmsv.api.team.config.SchoolEmailProperties
 import com.gsmsv.api.team.domain.Team
 import com.gsmsv.api.team.domain.TeamStatus
 import com.gsmsv.api.team.repository.TeamInvitationRepository
+import com.gsmsv.api.user.domain.User
+import com.gsmsv.api.user.domain.UserStatus
 import com.gsmsv.api.user.service.UserService
 import io.mockk.every
 import io.mockk.mockk
@@ -70,5 +74,27 @@ class TeamInvitationServiceTest {
         val exception = assertFailsWith<BusinessException> { service.invite(actor, team.id, "student@other.test") }
 
         assertEquals(ErrorCode.VALIDATION_FAILED, exception.errorCode)
+    }
+
+    @Test
+    fun `대소문자가 다른 기존 회원 이메일도 이미 팀원으로 처리한다`() {
+        every { loader.load(actor, team.id, Action.INVITE_MEMBER, teamService) } returns team
+        every { users.findByEmail("student@example.test") } returns
+            User("user-b2c3d4e5f6g7", "school-1", "Student@Example.Test", "학생", Role.USER, UserStatus.ACTIVE)
+        every { teamService.findRole(team.id, "user-b2c3d4e5f6g7") } returns TeamRole.MEMBER
+
+        val exception = assertFailsWith<BusinessException> { service.invite(actor, team.id, "student@example.test") }
+
+        assertEquals(ErrorCode.ALREADY_MEMBER, exception.errorCode)
+        verify(exactly = 0) { repository.saveAndFlush(any()) }
+        verify(exactly = 0) { mail.send(any(), any()) }
+    }
+
+    @Test
+    fun `잘못된 초대 id는 팀 조회 전에 거절한다`() {
+        val exception = assertFailsWith<BusinessException> { service.cancel(actor, team.id, "invalid") }
+
+        assertEquals(ErrorCode.INVALID_RESOURCE_ID, exception.errorCode)
+        verify(exactly = 0) { loader.load(actor, team.id, Action.INVITE_MEMBER, teamService) }
     }
 }

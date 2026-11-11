@@ -99,8 +99,8 @@ class TeamInvitationService(
         teamId: String,
         invitationId: String,
     ) {
-        val team = teamLoader.load(actor, teamId, Action.INVITE_MEMBER, teamService)
         IdParser.requireInvitationId(invitationId)
+        val team = teamLoader.load(actor, teamId, Action.INVITE_MEMBER, teamService)
         val invitation = invitationRepository.findByIdAndTeamId(invitationId, team.id)
         if (invitation == null || invitation.acceptedAt != null || invitation.canceledAt != null ||
             !invitation.expiresAt.isAfter(Instant.now())
