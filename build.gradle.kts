@@ -82,7 +82,10 @@ tasks.test {
 tasks.register<Test>("integrationTest") {
     description = "@Tag(\"integration\") 통합 테스트만 돌린다 (Docker 필요)"
     group = "verification"
-    testClassesDirs = sourceSets.test.get().output.classesDirs
+    testClassesDirs =
+        sourceSets.test
+            .get()
+            .output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     useJUnitPlatform {
         includeTags("integration")
