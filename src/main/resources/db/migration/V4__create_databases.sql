@@ -18,3 +18,6 @@ CREATE TABLE databases
 
 -- 소유자는 개인·팀 두 곳을 가리키므로 외래 키를 걸 수 없다. 소유자별 목록 조회용 인덱스만 둔다
 CREATE INDEX idx_databases_owner ON databases (owner_type, owner_id) WHERE deleted_at IS NULL;
+
+-- 삭제 표시된 행은 복원·정리(7일 지난 행 찾기)에서만 조회하므로 삭제된 행만 담는다
+CREATE INDEX idx_databases_deleted_at ON databases (deleted_at) WHERE deleted_at IS NOT NULL;
