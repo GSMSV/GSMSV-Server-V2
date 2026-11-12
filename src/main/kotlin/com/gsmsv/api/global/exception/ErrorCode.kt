@@ -23,6 +23,8 @@ enum class ErrorCode(
     INVITATION_EMAIL_MISMATCH(HttpStatus.FORBIDDEN, "초대 대상 이메일과 로그인한 계정이 다릅니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자원을 찾을 수 없습니다."),
     GONE(HttpStatus.GONE, "초대가 만료되었거나 더 이상 유효하지 않습니다."),
+    CONFLICT(HttpStatus.CONFLICT, "현재 상태에서는 요청을 처리할 수 없습니다."),
+    QUOTA_EXCEEDED(HttpStatus.CONFLICT, "앱 개수 한도를 초과했습니다."),
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 API가 없습니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "이 API에서 지원하지 않는 HTTP 메서드입니다."),
     UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 Content-Type입니다."),

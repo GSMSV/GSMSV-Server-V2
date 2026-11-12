@@ -8,6 +8,8 @@ import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.global.grn.IdGenerator
 import com.gsmsv.api.team.domain.Team
 import com.gsmsv.api.team.domain.TeamMember
+import com.gsmsv.api.global.response.FieldErrorDetail
+import com.gsmsv.api.team.domain.TeamStatus
 import com.gsmsv.api.team.repository.TeamMemberRepository
 import com.gsmsv.api.team.repository.TeamRepository
 import org.springframework.dao.DataIntegrityViolationException
@@ -51,5 +53,22 @@ class TeamService(
         } catch (_: DataIntegrityViolationException) {
             throw BusinessException(ErrorCode.ALREADY_MEMBER)
         }
+    }
+
+    @Transactional
+    fun resubmit(
+        team: Team,
+        name: String?,
+    ): Team {
+        val normalizedName = name?.trim()
+        if (normalizedName != null && normalizedName.codePointCount(0, normalizedName.length) !in 1..30) {
+            throw BusinessException(
+                ErrorCode.VALIDATION_FAILED,
+                details = mapOf("fields" to listOf(FieldErrorDetail("name", "팀 이름은 공백 제거 후 1~30자여야 합니다."))),
+            )
+        }
+        if (team.status != TeamStatus.REJECTED) throw BusinessException(ErrorCode.CONFLICT)
+        team.resubmit(normalizedName)
+        return teamRepository.save(team)
     }
 }

@@ -38,6 +38,18 @@ class TeamTest {
         assertFailsWith<IllegalArgumentException> { team.reject(" ") }
     }
 
+    @Test
+    fun `거절된 팀을 이름을 바꿔 다시 신청하고 거절 사유를 보존한다`() {
+        val team = Team(TEAM_ID, "기존 팀")
+        team.reject("이름 확인 필요")
+
+        team.resubmit("새 팀")
+
+        assertEquals(TeamStatus.PENDING, team.status)
+        assertEquals("새 팀", team.name)
+        assertEquals("이름 확인 필요", team.rejectionReason)
+    }
+
     companion object {
         private const val TEAM_ID = "team-c3d4e5f6g7h8"
     }
