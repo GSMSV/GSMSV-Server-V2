@@ -11,14 +11,19 @@ import com.gsmsv.api.global.security.AuthenticatedUser
 import com.gsmsv.api.global.security.CurrentUser
 import com.gsmsv.api.team.dto.CreateTeamRequest
 import com.gsmsv.api.team.dto.CreateTeamResponse
+import com.gsmsv.api.team.dto.InvitationResponse
+import com.gsmsv.api.team.dto.InviteMemberRequest
+import com.gsmsv.api.team.dto.InviteMemberResponse
 import com.gsmsv.api.team.dto.ResubmitTeamRequest
 import com.gsmsv.api.team.dto.ResubmitTeamResponse
 import com.gsmsv.api.team.dto.TeamDetailResponse
 import com.gsmsv.api.team.dto.TeamSummaryResponse
 import com.gsmsv.api.team.service.TeamApiService
+import com.gsmsv.api.team.service.TeamInvitationService
 import com.gsmsv.api.team.service.TeamService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
@@ -35,7 +40,39 @@ class TeamController(
     private val teamService: TeamService,
     private val teamLoader: TeamLoader,
     private val permissionsResolver: PermissionsResolver,
+    private val teamInvitationService: TeamInvitationService,
 ) {
+    @RequirePermission(Action.INVITE_MEMBER)
+    @PostMapping("/{team_id}/invitations")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    fun inviteMember(
+        @CurrentUser user: AuthenticatedUser,
+        @PathVariable("team_id") teamId: String,
+        @Valid @RequestBody request: InviteMemberRequest,
+    ): InviteMemberResponse {
+        teamInvitationService.invite(user.toActor(), teamId, request.email)
+        return InviteMemberResponse()
+    }
+
+    @RequirePermission(Action.INVITE_MEMBER)
+    @GetMapping("/{team_id}/invitations")
+    fun listInvitations(
+        @CurrentUser user: AuthenticatedUser,
+        @PathVariable("team_id") teamId: String,
+        @Valid @ModelAttribute pageRequest: CursorPageRequest,
+    ): CursorPage<InvitationResponse> = teamInvitationService.list(user.toActor(), teamId, pageRequest)
+
+    @RequirePermission(Action.INVITE_MEMBER)
+    @DeleteMapping("/{team_id}/invitations/{invitation_id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun cancelInvitation(
+        @CurrentUser user: AuthenticatedUser,
+        @PathVariable("team_id") teamId: String,
+        @PathVariable("invitation_id") invitationId: String,
+    ) {
+        teamInvitationService.cancel(user.toActor(), teamId, invitationId)
+    }
+
     @Authenticated
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

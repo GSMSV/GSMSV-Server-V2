@@ -14,6 +14,9 @@ class UserService(
     private val userRepository: UserRepository,
 ) {
     @Transactional(readOnly = true)
+    fun findByEmail(email: String): User? = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(email)
+
+    @Transactional(readOnly = true)
     fun findSummariesByIds(userIds: Collection<String>): Map<String, UserSummary> =
         userRepository
             .findAllById(userIds)
