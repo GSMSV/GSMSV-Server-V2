@@ -40,6 +40,7 @@ jobs:
           SPRING_PROFILES_ACTIVE: ${{ vars.SPRING_PROFILES_ACTIVE }}
           DB_URL: ${{ vars.DB_URL }}
           APP_PORT: ${{ vars.APP_PORT }}
+          SCHOOL_EMAIL_DOMAIN: ${{ vars.SCHOOL_EMAIL_DOMAIN }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -49,6 +50,7 @@ jobs:
             echo "SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE"
             echo "DB_URL=$DB_URL"
             echo "APP_PORT=$APP_PORT"
+            echo "SCHOOL_EMAIL_DOMAIN=$SCHOOL_EMAIL_DOMAIN"
             echo "DB_USERNAME=$DB_USERNAME"
             echo "DB_PASSWORD=$DB_PASSWORD"
             echo "JWT_SECRET=$JWT_SECRET"
