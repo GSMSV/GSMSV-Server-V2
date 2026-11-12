@@ -59,6 +59,26 @@ class TeamServiceTest {
     }
 
     @Test
+    fun `이미 있는 팀원을 다시 추가하면 conflict로 거절한다`() {
+        every { teamMemberRepository.existsByTeamIdAndUserId(TEAM_ID, USER_ID) } returns true
+
+        val exception = assertFailsWith<BusinessException> { teamService.addMember(TEAM_ID, USER_ID, TeamRole.MEMBER) }
+
+        assertEquals(ErrorCode.ALREADY_MEMBER, exception.errorCode)
+        verify(exactly = 0) { teamMemberRepository.saveAndFlush(any()) }
+    }
+
+    @Test
+    fun `동시에 추가된 중복 멤버는 유니크 제약 오류를 conflict로 바꾼다`() {
+        every { teamMemberRepository.existsByTeamIdAndUserId(TEAM_ID, USER_ID) } returns false
+        every { teamMemberRepository.saveAndFlush(any()) } throws org.springframework.dao.DataIntegrityViolationException("duplicate")
+
+        val exception = assertFailsWith<BusinessException> { teamService.addMember(TEAM_ID, USER_ID, TeamRole.MEMBER) }
+
+        assertEquals(ErrorCode.ALREADY_MEMBER, exception.errorCode)
+    }
+
+    @Test
     fun `거절된 팀은 이름을 다듬어 다시 신청한다`() {
         val team = Team(TEAM_ID, "기존 팀", TeamStatus.REJECTED, "사유")
         every { teamRepository.save(team) } returns team

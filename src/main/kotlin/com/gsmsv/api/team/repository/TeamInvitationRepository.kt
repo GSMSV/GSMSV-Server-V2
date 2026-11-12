@@ -1,8 +1,10 @@
 package com.gsmsv.api.team.repository
 
 import com.gsmsv.api.team.domain.TeamInvitation
+import jakarta.persistence.LockModeType
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.Instant
@@ -10,6 +12,7 @@ import java.time.Instant
 interface TeamInvitationRepository : JpaRepository<TeamInvitation, String> {
     fun saveAndFlush(entity: TeamInvitation): TeamInvitation
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     fun findByTeamIdAndEmailAndAcceptedAtIsNullAndCanceledAtIsNull(
         teamId: String,
         email: String,
@@ -31,8 +34,15 @@ interface TeamInvitationRepository : JpaRepository<TeamInvitation, String> {
         pageable: Pageable,
     ): List<TeamInvitation>
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     fun findByIdAndTeamId(
         id: String,
         teamId: String,
+    ): TeamInvitation?
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from TeamInvitation i where i.tokenHash = :tokenHash")
+    fun findByTokenHashForUpdate(
+        @Param("tokenHash") tokenHash: String,
     ): TeamInvitation?
 }
