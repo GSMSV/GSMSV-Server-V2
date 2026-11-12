@@ -1,0 +1,38 @@
+name: Image
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: 이미지 빌드·GHCR 업로드
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+          persist-credentials: false
+
+      - name: GHCR 로그인
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+
+      - name: 빌드·업로드
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          docker build -t "$IMAGE:$SHA" -t "$IMAGE:develop" .
+          docker push "$IMAGE:$SHA"
+          docker push "$IMAGE:develop"
