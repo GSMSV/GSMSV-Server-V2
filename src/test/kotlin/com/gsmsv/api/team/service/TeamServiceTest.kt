@@ -76,6 +76,9 @@ class TeamServiceTest {
         val exception = assertFailsWith<BusinessException> { teamService.addMember(TEAM_ID, USER_ID, TeamRole.MEMBER) }
 
         assertEquals(ErrorCode.ALREADY_MEMBER, exception.errorCode)
+    }
+
+    @Test
     fun `거절된 팀은 이름을 다듬어 다시 신청한다`() {
         val team = Team(TEAM_ID, "기존 팀", TeamStatus.REJECTED, "사유")
         every { teamRepository.save(team) } returns team
