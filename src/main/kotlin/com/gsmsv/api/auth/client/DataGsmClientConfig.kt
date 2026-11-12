@@ -12,15 +12,13 @@ import java.net.http.HttpClient
 @Configuration
 class DataGsmClientConfig {
     @Bean
-    fun dataGsmClient(
-        builder: RestClient.Builder,
-        properties: DataGsmProperties,
-    ): DataGsmClient {
+    fun dataGsmClient(properties: DataGsmProperties): DataGsmClient {
         val requestFactory =
             JdkClientHttpRequestFactory(
                 HttpClient.newBuilder().connectTimeout(properties.connectTimeout).build(),
             ).apply { setReadTimeout(properties.readTimeout) }
-        val base = builder.clone().requestFactory(requestFactory)
+        // 기본 설정에는 RestClient.Builder 빈이 없어 직접 만든다
+        val base = RestClient.builder().requestFactory(requestFactory)
         return DataGsmClient(
             properties,
             base.clone().baseUrl(properties.authBaseUrl).build(),
