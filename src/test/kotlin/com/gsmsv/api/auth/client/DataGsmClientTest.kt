@@ -181,10 +181,8 @@ class DataGsmClientTest {
         assertTrue(uri.contains("client_id=test-client"))
         assertTrue(uri.contains("state=state-1"))
         assertTrue(uri.contains("response_type=code"))
-        assertTrue(
-            uri.contains("scope=datagsm:account_read%20datagsm:student_read") ||
-                uri.contains("scope=datagsm:account_read%20datagsm:student_read".replace(":", "%3A")),
-        )
+        // 쿼리의 ':'는 RFC 3986상 허용 문자라 그대로 두고, 범위 사이 공백만 %20이 된다
+        assertTrue(uri.contains("scope=datagsm:account_read%20datagsm:student_read"))
         assertFalse(uri.contains("test-secret"))
     }
 
