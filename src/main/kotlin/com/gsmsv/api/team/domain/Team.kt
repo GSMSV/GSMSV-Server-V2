@@ -62,6 +62,12 @@ class Team(
         rejectionReason = reason
     }
 
+    fun resubmit(name: String? = null) {
+        check(status == TeamStatus.REJECTED) { "거절된 팀만 다시 신청할 수 있습니다." }
+        name?.let { this.name = it }
+        status = TeamStatus.PENDING
+    }
+
     @PreUpdate
     fun updateTimestamp() {
         updatedAt = Instant.now()
