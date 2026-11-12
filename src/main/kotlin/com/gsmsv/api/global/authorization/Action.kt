@@ -41,6 +41,7 @@ enum class Action(
     // 계약은 승인 대기 팀이 VM·데이터베이스를 만들지 못하게 한다. 지금은 생성 동작이 자원 종류로 나뉘지 않아
     // 모든 생성에 적용한다. 동작 이름이 자원별로 나뉘면 VM·데이터베이스 생성에만 둔다
     CREATE(Grant.LEADER_OR_DEVOPS, requiresApprovedTeam = true),
+    UPDATE(Grant.LEADER_OR_DEVOPS),
     DELETE(Grant.LEADER_OR_DEVOPS),
     POWER(Grant.LEADER_OR_DEVOPS),
     RESIZE(Grant.LEADER_OR_DEVOPS),

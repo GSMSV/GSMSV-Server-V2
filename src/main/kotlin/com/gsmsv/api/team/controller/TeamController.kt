@@ -14,6 +14,8 @@ import com.gsmsv.api.team.dto.CreateTeamResponse
 import com.gsmsv.api.team.dto.InvitationResponse
 import com.gsmsv.api.team.dto.InviteMemberRequest
 import com.gsmsv.api.team.dto.InviteMemberResponse
+import com.gsmsv.api.team.dto.ResubmitTeamRequest
+import com.gsmsv.api.team.dto.ResubmitTeamResponse
 import com.gsmsv.api.team.dto.TeamDetailResponse
 import com.gsmsv.api.team.dto.TeamSummaryResponse
 import com.gsmsv.api.team.service.TeamApiService
@@ -78,6 +80,17 @@ class TeamController(
         @CurrentUser user: AuthenticatedUser,
         @Valid @RequestBody request: CreateTeamRequest,
     ): CreateTeamResponse = teamApiService.createTeam(user.userId, request.name)
+
+    @RequirePermission(Action.RESUBMIT_TEAM)
+    @PostMapping("/{team_id}/resubmit")
+    fun resubmitTeam(
+        @CurrentUser user: AuthenticatedUser,
+        @PathVariable("team_id") teamId: String,
+        @Valid @RequestBody(required = false) request: ResubmitTeamRequest?,
+    ): ResubmitTeamResponse {
+        val team = teamLoader.load(user.toActor(), teamId, Action.RESUBMIT_TEAM, teamService)
+        return ResubmitTeamResponse.from(teamService.resubmit(team, request?.name))
+    }
 
     @Authenticated
     @GetMapping

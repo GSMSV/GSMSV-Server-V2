@@ -67,6 +67,11 @@ management:
     web:
       exposure:
         include: health
+  endpoint:
+    health:
+      # 상태 페이지 감시 도구에는 status만 준다. DB 종류·디스크 같은 내부 정보는 응답에 넣지 않는다 (28번)
+      show-details: never
+      show-components: never
 
 ---
 spring:
