@@ -1,19 +1,22 @@
 name: 이미지
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [develop]
 
 permissions:
   contents: read
 
 concurrency:
-  group: image-${{ github.ref }}
+  group: image-develop
   cancel-in-progress: false
 
 jobs:
   image:
     name: 이미지 빌드·GHCR 업로드
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # 이미지 업로드에만 packages 쓰기 권한을 준다
@@ -21,8 +24,10 @@ jobs:
       contents: read
       packages: write
     steps:
+      # CI가 검사한 커밋을 그대로 빌드한다
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
       # 공식 액션(actions/*)만 허용돼 있어 docker/* 액션 대신 docker CLI를 쓴다
@@ -36,7 +41,7 @@ jobs:
       - name: 이미지 빌드·업로드
         env:
           REPOSITORY: ${{ github.repository }}
-          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           IMAGE="ghcr.io/${REPOSITORY,,}:${COMMIT_SHA}"
           docker build -t "$IMAGE" .
