@@ -36,7 +36,7 @@ class AppCommandService(
     ): CreateAppResponse {
         val owner = Owner.User(user.userId)
         val expiresAfter = if (user.role == Role.ADMIN) TEAM_LIFETIME else PERSONAL_LIFETIME
-        return create(user, owner, name, PERSONAL_LIMIT, expiresAfter)
+        return create(user, owner, name, AppQuota.PERSONAL_COUNT, expiresAfter)
     }
 
     @Transactional
@@ -44,7 +44,7 @@ class AppCommandService(
         user: AuthenticatedUser,
         team: Team,
         name: String,
-    ): CreateAppResponse = create(user, Owner.Team(team.id), name, TEAM_LIMIT, TEAM_LIFETIME, team.name)
+    ): CreateAppResponse = create(user, Owner.Team(team.id), name, AppQuota.TEAM_COUNT, TEAM_LIFETIME, team.name)
 
     private fun create(
         user: AuthenticatedUser,
@@ -76,8 +76,6 @@ class AppCommandService(
     }
 
     companion object {
-        private const val PERSONAL_LIMIT = 2L
-        private const val TEAM_LIMIT = 4L
         private val PERSONAL_LIFETIME = Duration.ofDays(14)
         private val TEAM_LIFETIME = Duration.ofDays(31)
         private val APP_ACTIONS = listOf(Action.VIEW, Action.UPDATE, Action.EXTEND, Action.DELETE)
