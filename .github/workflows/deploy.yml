@@ -1,0 +1,70 @@
+name: 배포
+
+on:
+  workflow_run:
+    workflows: [이미지]
+    types: [completed]
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 배포할 이미지 태그(커밋 SHA). 비우면 지금 커밋
+        required: false
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: 운영 서버 배포
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, Linux]
+    environment: production
+    timeout-minutes: 15
+    env:
+      TAG: ${{ inputs.tag || github.event.workflow_run.head_sha || github.sha }}
+      DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - name: 환경 파일 쓰기
+        env:
+          SPRING_PROFILES_ACTIVE: ${{ vars.SPRING_PROFILES_ACTIVE }}
+          DB_URL: ${{ vars.DB_URL }}
+          APP_PORT: ${{ vars.APP_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          umask 077
+          {
+            echo "SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE"
+            echo "DB_URL=$DB_URL"
+            echo "APP_PORT=$APP_PORT"
+            echo "DB_USERNAME=$DB_USERNAME"
+            echo "DB_PASSWORD=$DB_PASSWORD"
+            echo "JWT_SECRET=$JWT_SECRET"
+          } > "$DEPLOY_DIR/.env"
+
+      - name: GHCR 로그인
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+
+      - name: 배포
+        run: |
+          ENV_FILE="$DEPLOY_DIR/.env" STATE_FILE="$DEPLOY_DIR/current-tag" \
+            ./deploy/deploy.sh "$TAG"
+
+      - name: GHCR 로그아웃
+        if: always()
+        run: docker logout ghcr.io
