@@ -24,7 +24,7 @@ class LoginService(
     private val properties: AuthProperties,
 ) {
     /** state를 저장한 뒤 DataGSM 로그인 주소를 돌려준다. */
-    fun startLogin(redirect: String?): String = dataGsmClient.authorizationUri(loginStateService.issueState(redirect))
+    fun startLogin(redirect: String?): String = loginStateService.createAuthorizationRequest(redirect, dataGsmClient::authorizationRequest)
 
     /** 콜백 성공·실패 주소를 돌려줘 브라우저 흐름에서 JSON 오류가 나가지 않게 한다. */
     fun handleCallback(
@@ -48,7 +48,7 @@ class LoginService(
         val stateValue = state?.takeIf { it.isNotBlank() } ?: throw BusinessException(ErrorCode.OAUTH_STATE_INVALID)
         val loginState = loginStateService.consumeState(stateValue)
         val authorizationCode = code?.takeIf { it.isNotBlank() } ?: throw BusinessException(ErrorCode.OAUTH_EXCHANGE_FAILED)
-        val token = dataGsmClient.exchangeCode(authorizationCode)
+        val token = dataGsmClient.exchangeCode(authorizationCode, loginState.codeVerifier)
         val userInfo = dataGsmClient.fetchUserInfo(token.accessToken)
         val email = userInfo.email?.takeIf { it.isNotBlank() } ?: throw BusinessException(ErrorCode.OAUTH_EXCHANGE_FAILED)
         val dataGsmId = userInfo.id.toString()
