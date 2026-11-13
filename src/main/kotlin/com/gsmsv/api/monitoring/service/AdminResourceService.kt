@@ -107,6 +107,7 @@ class AdminResourceService(
                     is Owner.User -> owner.id
                     is Owner.Team -> leaders[owner.id]
                 }
+            // 팀장이 없는 팀은 userId가 없어 빈 문자열이 된다
             owner.id to userId?.let(emails::get).orEmpty()
         }
     }
@@ -119,6 +120,7 @@ class AdminResourceService(
         val status: String,
         val createdAt: Instant,
     ) {
+        // 내림차순 목록이라 커서 "이후"는 더 작은 (createdAt, id)다
         fun isAfter(cursor: Cursor): Boolean = createdAt < cursor.createdAt || (createdAt == cursor.createdAt && id < cursor.id)
 
         // node·vmid는 DB에 없고, power_state는 Go 상태 캐시(34번 제안)가 생기면 VM에만 채운다

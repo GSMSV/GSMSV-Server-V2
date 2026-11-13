@@ -7,7 +7,7 @@ data class AdminResourceFilterRequest(
     @field:Pattern(regexp = "^(vm|fn|db|app)$", message = "vm, fn, db, app 중 하나여야 합니다.")
     val type: String? = null,
     val node: String? = null,
-    /** `user-…` 또는 `team-…` */
+    /** `user-…` 또는 `team-…` (예: `user-a1b2c3d4e5f6`, `team-c3d4e5f6g7h8`) */
     val owner: String? = null,
 )
 
