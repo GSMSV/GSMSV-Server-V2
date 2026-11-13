@@ -145,7 +145,13 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     private fun toFieldDetail(error: MessageSourceResolvable): FieldErrorDetail =
         FieldErrorDetail((error as? FieldError)?.field?.let(::toJsonPath), reasonOf(error))
 
-    private fun reasonOf(error: MessageSourceResolvable): String = error.defaultMessage ?: ErrorCode.VALIDATION_FAILED.message
+    // 타입 변환 실패의 기본 메시지에는 내부 타입 이름과 요청 값이 들어 있어 고정 문구로 바꾼다
+    private fun reasonOf(error: MessageSourceResolvable): String =
+        if (error is FieldError && error.isBindingFailure) {
+            TYPE_MISMATCH_REASON
+        } else {
+            error.defaultMessage ?: ErrorCode.VALIDATION_FAILED.message
+        }
 
     private fun errorCodeOf(
         exception: Exception,
@@ -178,6 +184,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
     companion object {
         private val SNAKE_CASE = PropertyNamingStrategies.SNAKE_CASE
+        private const val TYPE_MISMATCH_REASON = "형식이 올바르지 않습니다."
         private val NAME_SEGMENT = Regex("[A-Za-z0-9_]+")
 
         // 검증 오류의 필드 이름은 Kotlin 프로퍼티 이름(camelCase)이라 요청 JSON 이름으로 바꾼다
