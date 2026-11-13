@@ -195,6 +195,7 @@ com.gsmsv.api
   - `ServiceResourceLoader` (GRN): 파서 검사 → id로 DB 1회 조회 → DB 값으로 GRN을 다시 만들어 요청 GRN과 통째로 비교(다르면 404) → 규칙표 판단
   - `SubResourceLoader` (부모 GRN + 하위 id, 또는 하위 자원 표기): 하위 id 형식 검사 → 부모를 위 과정으로 통과시킨 뒤 하위 자원을 찾고, 실제 부모가 요청의 부모와 같은지 확인(다르면 404). 부모 GRN 없이 하위 id만으로 찾는 길은 두지 않는다
   - `TeamLoader` (팀 id): 팀 id 형식 검사 → 같은 규칙표로 판단하고 감사 로그를 남긴다. 팀 앞으로 VM·데이터베이스를 만드는 동작도 이 로더로 판단한다
+- 특정 자원이 없는 관리자 전용 동작(관리자 인프라 현황 등)은 `PlatformLoader`로 판단한다. `Grant.ADMIN_ONLY` 동작만 받고, 같은 `AuthorizationPolicy`를 지나며 감사 로그를 남긴다. 목록은 그 뒤에 `listVisible`로 꺼낸다
 - 컨트롤러 메서드마다 `@RequirePermission(Action.X)`, `@Authenticated`, `@Public` 중 하나만 붙인다. 없거나 둘 이상이면 앱이 뜨지 않는다 (`EndpointAnnotationVerifier`). 테스트용 컨트롤러도 같다
   - 로더를 부르는 엔드포인트는 `@RequirePermission`을 달고, 로더에 같은 `Action`을 넘긴다. 다르거나 선언이 없으면 500으로 실패한다
   - `@Public`은 `SecurityConfig.PUBLIC_PATHS`에도 경로를 추가해야 열린다
