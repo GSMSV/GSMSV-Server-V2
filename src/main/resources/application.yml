@@ -72,6 +72,14 @@ gsmsv:
     count-limit:
       personal: 2
       team: 4
+  network:
+    https:
+      # 사용자 서브도메인 뒤에 붙는 기본 도메인. 운영 값은 환경 변수로 넣는다
+      base-domain: ${HTTPS_BASE_DOMAIN:localhost}
+      # VM당 도메인 개수 한도 (Contracts-V2 openapi/network.yaml 5.11)
+      per-vm-limit: 2
+      # v1 예약어 목록으로 시작한다. 목록은 계약이 아직 정하지 않았다 (Contracts-V2 23번 12장)
+      reserved-subdomains: admin,api,www,status,app,mail,ftp,gsmsv
   infra:
     # Go 내부 API 연결 설정. 값은 환경 변수로만 받고 기본값에 실제 값을 두지 않는다 (dev·local은 모의 구현이라 비어 있어도 된다)
     base-url: ${INFRA_BASE_URL:}
