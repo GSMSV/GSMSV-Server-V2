@@ -86,6 +86,16 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    fun `타입 변환 실패의 reason은 내부 타입과 입력 값 없이 고정 문구를 돌려준다`() {
+        mockMvc.get("/test/page?limit=abc").andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+            jsonPath("$.details.fields[0].field") { value("limit") }
+            jsonPath("$.details.fields[0].reason") { value("형식이 올바르지 않습니다.") }
+        }
+    }
+
+    @Test
     fun `모르는 필드가 있으면 400 UNKNOWN_FIELD와 필드 이름을 돌려준다`() {
         post("""{"vm_name":"web","cpu_count":1,"extra_field":1}""").andExpect {
             status { isBadRequest() }
@@ -162,8 +172,18 @@ class GlobalExceptionHandlerTest {
         val cpuCount: Int,
     )
 
+    data class PageQuery(
+        @field:Min(1)
+        val limit: Int = 20,
+    )
+
     @RestController
     class TestController {
+        @GetMapping("/test/page")
+        fun page(
+            @Valid query: PageQuery,
+        ): Int = query.limit
+
         @GetMapping("/test/vms/{grn}")
         fun get(
             @PathVariable grn: String,
