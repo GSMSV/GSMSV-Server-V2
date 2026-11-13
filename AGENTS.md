@@ -151,7 +151,11 @@ com.gsmsv.api
 ./gradlew test --tests 'com.gsmsv.api.vm.*'
 ```
 
-- Testcontainers를 쓰는 테스트(DB 등)는 `@Tag("integration")`을 붙인다. DB 스키마·repository·설정처럼 관련 부분이 바뀔 때만 로컬에서 돌린다
+- Testcontainers를 쓰는 테스트(DB 등)는 `@Tag("integration")`을 붙인다. `test`는 이 태그를 빼고 돌고, `integrationTest`가 이 태그만 돌린다 (Docker 필요). DB 스키마·repository·설정처럼 관련 부분이 바뀔 때만 로컬에서 돌린다
+  ```bash
+  ./gradlew integrationTest --tests 'com.gsmsv.api.vm.*'
+  ```
+- CI는 develop 대상 PR에서 `test`(단위)만, main 대상 PR(develop → main)에서는 `integrationTest`까지 돌린다
 - Gradle 빌드 캐시가 켜져 있다 (`gradle.properties`의 `org.gradle.caching=true`)
 - 결과는 **실패한 테스트와 원인만** 보고한다. 통과한 목록이나 전체 로그를 붙이지 않는다
 
