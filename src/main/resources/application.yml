@@ -35,6 +35,11 @@ gsmsv:
       # Base64로 인코딩한 32바이트 이상의 무작위 값. 환경 변수로만 받고 기본값을 두지 않는다 (예: openssl rand -base64 32)
       secret: ${JWT_SECRET}
       access-token-ttl: 15m
+  datagsm:
+    # DataGSM OAuth 클라이언트 등록 정보 (https://docs.datagsm.kr/oauth). 환경 변수로만 받고 기본값을 두지 않는다. 비어 있으면 기동에 실패한다
+    client-id: ${DATAGSM_CLIENT_ID}
+    client-secret: ${DATAGSM_CLIENT_SECRET}
+    redirect-uri: ${DATAGSM_REDIRECT_URI}
   rate-limit:
     # 한도 값은 Contracts-V2 openapi/auth.yaml(IP당 분당 10회)과 services/one-touch-deploy.md(사용자당 분당 60회)를 따른다
     # 카운터는 인스턴스 메모리에만 있다. IP 기준은 프록시 뒤에서 전달 헤더를 해석하도록 서버가 설정돼 있어야 실제 클라이언트 IP가 된다
