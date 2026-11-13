@@ -1,5 +1,6 @@
 package com.gsmsv.api.global.ratelimit
 
+import com.gsmsv.api.auth.config.AuthProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -15,7 +16,8 @@ class RateLimitConfig {
         properties: RateLimitProperties,
         limiter: RateLimiter,
         jsonMapper: JsonMapper,
-    ): RateLimitFilter = RateLimitFilter(properties, limiter, jsonMapper)
+        authProperties: AuthProperties,
+    ): RateLimitFilter = RateLimitFilter(properties, limiter, jsonMapper, authProperties)
 
     // 필터 빈은 Boot가 서블릿 필터로도 등록한다. 보안 체인 안에서 한 번만 돌게 끈다
     @Bean

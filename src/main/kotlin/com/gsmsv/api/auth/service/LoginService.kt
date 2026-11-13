@@ -48,7 +48,12 @@ class LoginService(
         val stateValue = state?.takeIf { it.isNotBlank() } ?: throw BusinessException(ErrorCode.OAUTH_STATE_INVALID)
         val loginState = loginStateService.consumeState(stateValue)
         val authorizationCode = code?.takeIf { it.isNotBlank() } ?: throw BusinessException(ErrorCode.OAUTH_EXCHANGE_FAILED)
-        val token = dataGsmClient.exchangeCode(authorizationCode, loginState.codeVerifier)
+        val token =
+            if (loginState.codeVerifier.isBlank()) {
+                dataGsmClient.exchangeCode(authorizationCode)
+            } else {
+                dataGsmClient.exchangeCode(authorizationCode, loginState.codeVerifier)
+            }
         val userInfo = dataGsmClient.fetchUserInfo(token.accessToken)
         val email = userInfo.email?.takeIf { it.isNotBlank() } ?: throw BusinessException(ErrorCode.OAUTH_EXCHANGE_FAILED)
         val dataGsmId = userInfo.id.toString()

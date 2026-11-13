@@ -6,7 +6,6 @@ CREATE TABLE auth_login_states
 (
     state_hash VARCHAR(64) PRIMARY KEY,
     redirect   TEXT        NOT NULL,
-    code_verifier TEXT     NOT NULL DEFAULT '',
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL
 );
