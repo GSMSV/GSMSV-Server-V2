@@ -48,6 +48,20 @@ class TeamServiceTest {
     }
 
     @Test
+    fun `팀마다 팀장 사용자 id를 찾는다`() {
+        every { teamMemberRepository.findAllByTeamIdInAndRole(listOf(TEAM_ID), TeamRole.LEADER) } returns
+            listOf(TeamMember(MEMBER_ID, TEAM_ID, USER_ID, TeamRole.LEADER))
+
+        assertEquals(mapOf(TEAM_ID to USER_ID), teamService.findLeaderUserIds(listOf(TEAM_ID)))
+    }
+
+    @Test
+    fun `팀 id가 없으면 팀장을 조회하지 않는다`() {
+        assertEquals(emptyMap(), teamService.findLeaderUserIds(emptyList()))
+        verify(exactly = 0) { teamMemberRepository.findAllByTeamIdInAndRole(any(), any()) }
+    }
+
+    @Test
     fun `팀원 전원의 사용자 id를 조회한다`() {
         every { teamMemberRepository.findAllByTeamId(TEAM_ID) } returns
             listOf(
