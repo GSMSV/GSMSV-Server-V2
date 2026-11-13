@@ -35,6 +35,9 @@ enum class Action(
     VIEW_ACCESS_INFO(Grant.ALL_MEMBERS),
     EXTEND(Grant.ALL_MEMBERS),
 
+    /** 백업 파일 내려받기. 계약 `permissions`의 `read_backup`과 이름을 맞췄다 */
+    READ_BACKUP(Grant.ALL_MEMBERS),
+
     /** 팀 탈퇴. 대상은 언제나 요청자 본인이다 */
     LEAVE_TEAM(Grant.ALL_MEMBERS),
 
