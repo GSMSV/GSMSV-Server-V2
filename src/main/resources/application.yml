@@ -72,6 +72,15 @@ gsmsv:
     count-limit:
       personal: 2
       team: 4
+  network:
+    port-forward:
+      # 사용자에게 보여 주는 접속 주소다. 노드를 드러내지 않는 이름을 운영 환경 변수로 넣는다
+      public-host: ${PORT_FORWARD_PUBLIC_HOST:localhost}
+      # (미정) 커스텀 외부 포트 범위는 외부 포트 규칙과 함께 인프라 담당이 정한다. 기본값은 개발용 임시 값이다
+      custom-port-min: ${PORT_FORWARD_CUSTOM_PORT_MIN:40000}
+      custom-port-max: ${PORT_FORWARD_CUSTOM_PORT_MAX:49999}
+      # VM 1대의 커스텀 포트 개수 한도 (Contracts-V2 openapi/network.yaml)
+      custom-limit: 30
   infra:
     # Go 내부 API 연결 설정. 값은 환경 변수로만 받고 기본값에 실제 값을 두지 않는다 (dev·local은 모의 구현이라 비어 있어도 된다)
     base-url: ${INFRA_BASE_URL:}
