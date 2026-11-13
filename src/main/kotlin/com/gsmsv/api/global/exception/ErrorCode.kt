@@ -15,9 +15,9 @@ enum class ErrorCode(
     INVALID_GRN(HttpStatus.BAD_REQUEST, "GRN 형식이 올바르지 않습니다."),
     GRN_RESOURCE_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "이 API에서 다룰 수 없는 자원 종류입니다."),
     INVALID_RESOURCE_ID(HttpStatus.BAD_REQUEST, "id 형식이 올바르지 않습니다."),
-    CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "확인 값이 대상과 다릅니다."),
     OAUTH_STATE_INVALID(HttpStatus.BAD_REQUEST, "로그인 요청을 확인하지 못했습니다. 다시 시도해 주세요."),
     OAUTH_EXCHANGE_FAILED(HttpStatus.BAD_REQUEST, "DataGSM 인증을 확인하지 못했습니다."),
+    CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "확인 값이 대상과 다릅니다."),
     UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
     NOT_ENROLLED(HttpStatus.FORBIDDEN, "재학생이 아니어서 로그인할 수 없습니다."),
     ACCOUNT_INACTIVE(HttpStatus.FORBIDDEN, "비활성화된 계정입니다."),
@@ -27,9 +27,7 @@ enum class ErrorCode(
     TEAM_NOT_APPROVED(HttpStatus.FORBIDDEN, "승인되지 않은 팀은 이 동작을 할 수 없습니다."),
     INVITATION_EMAIL_MISMATCH(HttpStatus.FORBIDDEN, "초대 대상 이메일과 로그인한 계정이 다릅니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자원을 찾을 수 없습니다."),
-
-    // 초대와 로그인 임시 코드가 함께 쓰는 code라 어느 쪽에도 치우치지 않는 문구를 둔다
-    GONE(HttpStatus.GONE, "만료되었거나 더 이상 유효하지 않습니다."),
+    GONE(HttpStatus.GONE, "요청한 항목이 만료되었거나 더 이상 유효하지 않습니다."),
     QUOTA_EXCEEDED(HttpStatus.CONFLICT, "앱 개수 한도를 초과했습니다."),
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 API가 없습니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "이 API에서 지원하지 않는 HTTP 메서드입니다."),
