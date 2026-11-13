@@ -16,6 +16,8 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestClient
 import java.io.IOException
+import java.security.MessageDigest
+import java.util.Base64
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -48,6 +50,7 @@ class DataGsmClientTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("client_id=test-client")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("client_secret=test-secret")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("redirect_uri=")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("code_verifier=verifier-value")))
             .andRespond(
                 withSuccess(
                     """{"access_token":"at","token_type":"Bearer","expires_in":3600,"refresh_token":"rt","scope":"x","id_token":null}""",
@@ -55,13 +58,27 @@ class DataGsmClientTest {
                 ),
             )
 
-        assertEquals("at", client.exchangeCode("abc").accessToken)
+        assertEquals("at", client.exchangeCode("abc", "verifier-value").accessToken)
         authServer.verify()
     }
 
     @Test
     fun `토큰의 toString에는 토큰 값이 없다`() {
         assertFalse(DataGsmToken("secret-token").toString().contains("secret-token"))
+    }
+
+    @Test
+    fun `기존 코드 교환은 verifier 없이 동작한다`() {
+        authServer
+            .expect(requestTo("http://auth.test/v1/oauth/token"))
+            .andExpect(
+                content().string(
+                    org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("code_verifier")),
+                ),
+            ).andRespond(withSuccess("""{"access_token":"at"}""", MediaType.APPLICATION_JSON))
+
+        assertEquals("at", client.exchangeCode("abc").accessToken)
+        authServer.verify()
     }
 
     @Test
@@ -135,13 +152,25 @@ class DataGsmClientTest {
 
     @Test
     fun `졸업생과 자퇴생은 재학이 아니다`() {
-        for (role in listOf("GRADUATE", "WITHDRAWN")) {
+        for (role in listOf("GRADUATE", "WITHDRAWN", "UNKNOWN_ROLE")) {
             resourceServer.reset()
             resourceServer
                 .expect(requestTo("http://resource.test/userinfo"))
                 .andRespond(withSuccess(STUDENT_JSON.replace("GENERAL_STUDENT", role), MediaType.APPLICATION_JSON))
 
             assertFalse(client.fetchUserInfo("at").isEnrolled(), role)
+        }
+    }
+
+    @Test
+    fun `문서화된 재학생 역할만 재학으로 판단한다`() {
+        for (role in listOf("GENERAL_STUDENT", "STUDENT_COUNCIL", "DORMITORY_MANAGER")) {
+            resourceServer.reset()
+            resourceServer
+                .expect(requestTo("http://resource.test/userinfo"))
+                .andRespond(withSuccess(STUDENT_JSON.replace("GENERAL_STUDENT", role), MediaType.APPLICATION_JSON))
+
+            assertTrue(client.fetchUserInfo("at").isEnrolled(), role)
         }
     }
 
@@ -181,9 +210,26 @@ class DataGsmClientTest {
         assertTrue(uri.contains("client_id=test-client"))
         assertTrue(uri.contains("state=state-1"))
         assertTrue(uri.contains("response_type=code"))
+        assertTrue(uri.contains("redirect_uri=https%3A%2F%2Fapi.test%2Fapi%2Fv2%2Fauth%2Fdatagsm%2Fcallback"), uri)
+        assertFalse(uri.contains("code_challenge"))
         // 쿼리의 ':'는 RFC 3986상 허용 문자라 그대로 두고, 범위 사이 공백만 %20이 된다
         assertTrue(uri.contains("scope=datagsm:account_read%20datagsm:student_read"))
         assertFalse(uri.contains("test-secret"))
+    }
+
+    @Test
+    fun `PKCE 인가 요청은 verifier와 S256 challenge를 만든다`() {
+        val request = client.authorizationRequest("state-1")
+        val expectedChallenge =
+            Base64
+                .getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(MessageDigest.getInstance("SHA-256").digest(request.codeVerifier.toByteArray(Charsets.US_ASCII)))
+
+        assertEquals(43, request.codeVerifier.length)
+        assertTrue(request.authorizationUri.contains("code_challenge=$expectedChallenge"))
+        assertTrue(request.authorizationUri.contains("code_challenge_method=S256"))
+        assertFalse(request.toString().contains(request.codeVerifier))
     }
 
     @Test

@@ -34,12 +34,20 @@ data class DataGsmUserInfo(
      * 재학 여부. DataGSM에는 재학 확인 API가 따로 없고 `student.role`로 판단한다 (졸업·자퇴는 재학이 아니다).
      * 학생 정보가 없으면(`datagsm:student_read` 범위가 없거나 교사) 재학으로 보지 않는다.
      */
-    fun isEnrolled(): Boolean = objectType == STUDENT && student?.role?.let { it !in NOT_ENROLLED_ROLES } == true
+    fun isEnrolled(): Boolean = objectType == STUDENT && student?.role?.let { it in ENROLLED_ROLES } == true
 
     companion object {
         private const val STUDENT = "STUDENT"
-        private val NOT_ENROLLED_ROLES = setOf("GRADUATE", "WITHDRAWN")
+        private val ENROLLED_ROLES = setOf("GENERAL_STUDENT", "STUDENT_COUNCIL", "DORMITORY_MANAGER")
     }
+}
+
+/** PKCE 인가 요청. [codeVerifier]는 로그인 검증값과 함께 저장하고 콜백 후 [DataGsmClient.exchangeCode]에 전달한다. */
+data class DataGsmAuthorizationRequest(
+    val authorizationUri: String,
+    val codeVerifier: String,
+) {
+    override fun toString(): String = "DataGsmAuthorizationRequest(authorizationUri=***, codeVerifier=***)"
 }
 
 /** 학생 정보. [role]은 `GENERAL_STUDENT`·`STUDENT_COUNCIL`·`DORMITORY_MANAGER`·`GRADUATE`·`WITHDRAWN` 중 하나다 */

@@ -12,6 +12,9 @@ import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.util.UriComponentsBuilder
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.json.JsonMapper
+import java.security.MessageDigest
+import java.security.SecureRandom
+import java.util.Base64
 
 private val log = KotlinLogging.logger {}
 
@@ -33,21 +36,62 @@ class DataGsmClient(
     private val mapper: JsonMapper = JsonMapper.builder().findAndAddModules().build()
 
     /** DataGSM 로그인 화면 주소. [state]는 콜백에서 그대로 돌아온다 */
-    fun authorizationUri(state: String): String =
-        UriComponentsBuilder
-            .fromUriString(properties.authBaseUrl)
-            .path("/v1/oauth/authorize")
-            .queryParam("client_id", properties.clientId)
-            .queryParam("redirect_uri", properties.redirectUri)
-            .queryParam("response_type", "code")
-            .queryParam("scope", SCOPE)
-            .queryParam("state", state)
-            .encode()
-            .build()
-            .toUriString()
+    fun authorizationUri(state: String): String = authorizationUri(state, null)
+
+    /** PKCE 인가 요청을 만들고 콜백까지 [state]와 검증값을 함께 보관한다. */
+    fun authorizationRequest(state: String): DataGsmAuthorizationRequest {
+        val verifierBytes = ByteArray(PKCE_VERIFIER_BYTES).also(secureRandom::nextBytes)
+        val verifier = Base64.getUrlEncoder().withoutPadding().encodeToString(verifierBytes)
+        val challenge =
+            Base64
+                .getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
+        return DataGsmAuthorizationRequest(authorizationUri(state, challenge), verifier)
+    }
+
+    private fun authorizationUri(
+        state: String,
+        codeChallenge: String?,
+    ): String {
+        val uriVariables =
+            mutableMapOf<String, Any>(
+                "clientId" to properties.clientId,
+                "redirectUri" to properties.redirectUri,
+                "state" to state,
+            )
+        val builder =
+            UriComponentsBuilder
+                .fromUriString(properties.authBaseUrl)
+                .path("/v1/oauth/authorize")
+                .queryParam("client_id", "{clientId}")
+                .queryParam("redirect_uri", "{redirectUri}")
+                .queryParam("response_type", "code")
+                .queryParam("scope", SCOPE)
+                .queryParam("state", "{state}")
+                .apply {
+                    if (codeChallenge != null) {
+                        queryParam("code_challenge", "{codeChallenge}")
+                        queryParam("code_challenge_method", "S256")
+                        uriVariables["codeChallenge"] = codeChallenge
+                    }
+                }
+        return builder.encode().buildAndExpand(uriVariables).toUriString()
+    }
 
     /** 인가 코드를 DataGSM 토큰으로 바꾼다 */
-    fun exchangeCode(code: String): DataGsmToken {
+    fun exchangeCode(code: String): DataGsmToken = exchangeCodeInternal(code, null)
+
+    /** [authorizationRequest]에서 만든 검증값과 인가 코드를 DataGSM 토큰으로 교환한다. */
+    fun exchangeCode(
+        code: String,
+        codeVerifier: String,
+    ): DataGsmToken = exchangeCodeInternal(code, codeVerifier)
+
+    private fun exchangeCodeInternal(
+        code: String,
+        codeVerifier: String?,
+    ): DataGsmToken {
         val form =
             LinkedMultiValueMap<String, String>().apply {
                 add("grant_type", "authorization_code")
@@ -55,6 +99,7 @@ class DataGsmClient(
                 add("client_id", properties.clientId)
                 add("client_secret", properties.clientSecret)
                 add("redirect_uri", properties.redirectUri)
+                codeVerifier?.let { add("code_verifier", it) }
             }
         return call("token-exchange", DataGsmToken::class.java) {
             authClient
@@ -116,5 +161,7 @@ class DataGsmClient(
         // 계정 기본 정보(이메일 포함)와 학생 정보(재학 판단용)
         const val SCOPE = "datagsm:account_read datagsm:student_read"
         private const val UNAVAILABLE_MESSAGE = "학생 정보 서비스가 응답하지 않습니다."
+        private const val PKCE_VERIFIER_BYTES = 32
+        private val secureRandom = SecureRandom()
     }
 }
