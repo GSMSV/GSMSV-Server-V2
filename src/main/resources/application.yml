@@ -26,6 +26,8 @@ spring:
     locations: classpath:db/migration
 
 gsmsv:
+  auth:
+    frontend-url: ${AUTH_FRONTEND_URL:}
   team:
     email-domain: ${SCHOOL_EMAIL_DOMAIN:}
   security:
