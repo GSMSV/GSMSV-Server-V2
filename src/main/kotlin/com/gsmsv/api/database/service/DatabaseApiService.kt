@@ -128,6 +128,6 @@ class DatabaseApiService(
     ): Boolean = database.createdAt < cursor.createdAt || (database.createdAt == cursor.createdAt && database.id < cursor.id)
 
     private companion object {
-        val PERMISSION_ACTIONS = listOf(Action.DELETE, Action.EXTEND, Action.VIEW_ACCESS_INFO)
+        val PERMISSION_ACTIONS = listOf(Action.DELETE, Action.EXTEND, Action.VIEW_ACCESS_INFO, Action.ROTATE_PASSWORD)
     }
 }
