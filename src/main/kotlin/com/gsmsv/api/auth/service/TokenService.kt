@@ -26,7 +26,7 @@ class TokenService(
     private val tokenProvider: AccessTokenProvider,
     private val refreshTokenService: RefreshTokenService,
 ) {
-    @Transactional(noRollbackFor = [BusinessException::class])
+    @Transactional
     fun exchange(code: String): IssuedTokens {
         val loginCode = loginStateService.consumeCode(code)
         val user = userService.findById(loginCode.userId)
