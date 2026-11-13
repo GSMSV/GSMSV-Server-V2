@@ -24,6 +24,8 @@ object IdGenerator {
 
     fun teamMemberId(): String = generate(IdPattern.TEAM_MEMBER_PREFIX, IdPattern.LONG_LENGTH)
 
+    fun invitationId(): String = generate("inv", IdPattern.LONG_LENGTH)
+
     /** 알림 id. 하위 자원처럼 8자다 (`openapi/monitoring.yaml`). 예: `ntf-4k8m2q9t` */
     fun notificationId(): String = generate(IdPattern.NOTIFICATION_PREFIX, IdPattern.SHORT_LENGTH)
 

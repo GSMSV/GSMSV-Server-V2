@@ -26,11 +26,28 @@ spring:
     locations: classpath:db/migration
 
 gsmsv:
+  team:
+    email-domain: ${SCHOOL_EMAIL_DOMAIN:}
   security:
     jwt:
       # Base64로 인코딩한 32바이트 이상의 무작위 값. 환경 변수로만 받고 기본값을 두지 않는다 (예: openssl rand -base64 32)
       secret: ${JWT_SECRET}
       access-token-ttl: 15m
+  rate-limit:
+    # 한도 값은 Contracts-V2 openapi/auth.yaml(IP당 분당 10회)과 services/one-touch-deploy.md(사용자당 분당 60회)를 따른다
+    # 카운터는 인스턴스 메모리에만 있다. IP 기준은 프록시 뒤에서 전달 헤더를 해석하도록 서버가 설정돼 있어야 실제 클라이언트 IP가 된다
+    enabled: true
+    rules:
+      - name: auth-login
+        paths: /api/v2/auth/datagsm/authorize,/api/v2/auth/datagsm/callback,/api/v2/auth/token-exchange
+        key: IP
+        limit: 10
+        window: 1m
+      - name: subdomain-availability
+        paths: /api/v2/apps/subdomains/availability
+        key: USER
+        limit: 60
+        window: 1m
   quota:
     # Contracts-V2 policies/quota.md 3·4장의 값이다. 배포 없이 바꿀 수 있게 프로필 설정이나 환경 변수로 덮어쓴다
     personal:
@@ -51,6 +68,10 @@ gsmsv:
     storage-limit:
       personal-gib: 1
       team-gib: 2
+    # 소유자별 DB 개수 한도 (Contracts-V2 services/database.md 7장). 전용형 포함
+    count-limit:
+      personal: 2
+      team: 4
   infra:
     # Go 내부 API 연결 설정. 값은 환경 변수로만 받고 기본값에 실제 값을 두지 않는다 (dev·local은 모의 구현이라 비어 있어도 된다)
     base-url: ${INFRA_BASE_URL:}
@@ -65,6 +86,11 @@ management:
     web:
       exposure:
         include: health
+  endpoint:
+    health:
+      # 상태 페이지 감시 도구에는 status만 준다. DB 종류·디스크 같은 내부 정보는 응답에 넣지 않는다 (28번)
+      show-details: never
+      show-components: never
 
 ---
 spring:

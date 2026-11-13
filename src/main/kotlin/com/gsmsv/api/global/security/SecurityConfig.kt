@@ -2,6 +2,7 @@ package com.gsmsv.api.global.security
 
 import com.gsmsv.api.global.idempotency.IdempotencyFilter
 import com.gsmsv.api.global.idempotency.IdempotencyStore
+import com.gsmsv.api.global.ratelimit.RateLimitFilter
 import jakarta.servlet.DispatcherType
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
@@ -28,6 +29,7 @@ class SecurityConfig : WebMvcConfigurer {
         tokenProvider: AccessTokenProvider,
         errorResponder: SecurityErrorResponder,
         idempotencyStore: ObjectProvider<IdempotencyStore>,
+        rateLimitFilter: ObjectProvider<RateLimitFilter>,
     ): SecurityFilterChain =
         http
             .statelessApi()
@@ -44,6 +46,9 @@ class SecurityConfig : WebMvcConfigurer {
                     jwt.decoder(tokenProvider.decoder)
                     jwt.jwtAuthenticationConverter(tokenProvider::toAuthentication)
                 }
+            }.apply {
+                // 사용자 키 제한은 인증 결과가 필요해 토큰 검증 필터 뒤에 둔다
+                rateLimitFilter.ifAvailable?.let { addFilterAfter(it, BearerTokenAuthenticationFilter::class.java) }
             }.exceptionHandling {
                 it.authenticationEntryPoint(errorResponder)
                 it.accessDeniedHandler(errorResponder)

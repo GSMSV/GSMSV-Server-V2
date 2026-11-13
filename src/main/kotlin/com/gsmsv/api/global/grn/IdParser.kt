@@ -12,6 +12,7 @@ object IdParser {
     private val USER_ID = Regex("^${IdPattern.USER_PREFIX}-${IdPattern.LONG}$")
     private val TEAM_ID = Regex("^${IdPattern.TEAM_PREFIX}-${IdPattern.LONG}$")
     private val NOTIFICATION_ID = Regex("^${IdPattern.NOTIFICATION_PREFIX}-${IdPattern.SHORT}$")
+    private val INVITATION_ID = Regex("^inv-${IdPattern.LONG}$")
     private val SUB_RESOURCE_ID = Regex("^(${IdPattern.SUB_RESOURCE_PREFIXES})-${IdPattern.SHORT}$")
 
     /** @throws BusinessException 형식이 맞지 않으면 [ErrorCode.INVALID_RESOURCE_ID] */
@@ -19,6 +20,8 @@ object IdParser {
 
     /** @throws BusinessException 형식이 맞지 않으면 [ErrorCode.INVALID_RESOURCE_ID] */
     fun requireTeamId(id: String): String = id.also { if (!TEAM_ID.matches(it)) throw invalid() }
+
+    fun requireInvitationId(id: String): String = id.also { if (!INVITATION_ID.matches(it)) throw invalid() }
 
     /** 알림 id(`ntf-` + 8자). @throws BusinessException 형식이 맞지 않으면 [ErrorCode.INVALID_RESOURCE_ID] */
     fun requireNotificationId(id: String): String = id.also { if (!NOTIFICATION_ID.matches(it)) throw invalid() }
