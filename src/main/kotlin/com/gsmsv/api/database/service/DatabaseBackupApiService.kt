@@ -56,6 +56,7 @@ class DatabaseBackupApiService(
             throw BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
         }
         val storage = storageProvider.getIfAvailable() ?: error("백업 저장소가 설정되지 않았습니다.")
+        val content = storage.read(backup.storageKey)
         auditRecorder.record(
             actor,
             AuditEventType.DATABASE_BACKUP_DOWNLOAD,
@@ -64,7 +65,7 @@ class DatabaseBackupApiService(
         return DatabaseBackupFile(
             fileName = "${backup.id}.sql.gz",
             sizeBytes = backup.sizeBytes,
-            content = storage.read(backup.storageKey),
+            content = content,
         )
     }
 
