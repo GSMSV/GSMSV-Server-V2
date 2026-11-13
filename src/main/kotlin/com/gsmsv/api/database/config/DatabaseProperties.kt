@@ -17,6 +17,7 @@ import org.springframework.validation.annotation.Validated
 data class DatabaseProperties(
     @field:Valid val connection: Connection,
     @field:Valid val storageLimit: StorageLimit,
+    @field:Valid val countLimit: CountLimit = CountLimit(),
 ) {
     data class Connection(
         @field:NotBlank val host: String,
@@ -29,5 +30,11 @@ data class DatabaseProperties(
     data class StorageLimit(
         @field:Positive val personalGib: Double,
         @field:Positive val teamGib: Double,
+    )
+
+    /** 소유자별 DB 개수 한도 (전용형 포함) */
+    data class CountLimit(
+        @field:Positive val personal: Int = 2,
+        @field:Positive val team: Int = 4,
     )
 }
