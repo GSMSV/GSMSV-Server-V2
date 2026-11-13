@@ -23,8 +23,11 @@ export DATAGSM_CLIENT_ID=...                   # DataGSM OAuth 클라이언트 �
 export DATAGSM_CLIENT_SECRET=...
 export DATAGSM_REDIRECT_URI=...                # DataGSM에 등록한 콜백 주소와 같아야 한다
 export AUTH_FRONTEND_URL=...                   # 로그인이 끝난 뒤 돌아갈 프론트 주소
+read -rp '학교 이메일 도메인: ' SCHOOL_EMAIL_DOMAIN; export SCHOOL_EMAIL_DOMAIN
 ./gradlew bootRun                              # 프로필을 주지 않으면 local
 ```
+
+팀 초대 API를 사용하려면 `SCHOOL_EMAIL_DOMAIN`에 학교 이메일 도메인을 설정한다. 값이 없으면 서버 설정 검증이 실패한다.
 
 로그인 없이 토큰을 받으려면 개발용 토큰 API를 쓴다. `local`·`dev` 프로필에서만 열린다.
 

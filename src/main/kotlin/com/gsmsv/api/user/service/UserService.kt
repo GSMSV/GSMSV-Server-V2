@@ -18,6 +18,12 @@ class UserService(
     fun findByDataGsmId(dataGsmId: String): User? = userRepository.findByDataGsmIdAndDeletedAtIsNull(dataGsmId)
 
     @Transactional(readOnly = true)
+    fun findById(id: String): User? = userRepository.findById(id).orElse(null)
+
+    @Transactional(readOnly = true)
+    fun findByEmail(email: String): User? = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(email)
+
+    @Transactional(readOnly = true)
     fun findSummariesByIds(userIds: Collection<String>): Map<String, UserSummary> =
         userRepository
             .findAllById(userIds)

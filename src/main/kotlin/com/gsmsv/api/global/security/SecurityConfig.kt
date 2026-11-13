@@ -1,11 +1,14 @@
 package com.gsmsv.api.global.security
 
+import com.gsmsv.api.global.ratelimit.RateLimitFilter
 import jakarta.servlet.DispatcherType
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
@@ -23,6 +26,7 @@ class SecurityConfig : WebMvcConfigurer {
         http: HttpSecurity,
         tokenProvider: AccessTokenProvider,
         errorResponder: SecurityErrorResponder,
+        rateLimitFilter: ObjectProvider<RateLimitFilter>,
     ): SecurityFilterChain =
         http
             .statelessApi()
@@ -39,6 +43,9 @@ class SecurityConfig : WebMvcConfigurer {
                     jwt.decoder(tokenProvider.decoder)
                     jwt.jwtAuthenticationConverter(tokenProvider::toAuthentication)
                 }
+            }.apply {
+                // 사용자 키 제한은 인증 결과가 필요해 토큰 검증 필터 뒤에 둔다
+                rateLimitFilter.ifAvailable?.let { addFilterAfter(it, BearerTokenAuthenticationFilter::class.java) }
             }.exceptionHandling {
                 it.authenticationEntryPoint(errorResponder)
                 it.accessDeniedHandler(errorResponder)

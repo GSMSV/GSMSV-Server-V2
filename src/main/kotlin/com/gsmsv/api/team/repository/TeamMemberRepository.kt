@@ -6,6 +6,11 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface TeamMemberRepository : JpaRepository<TeamMember, String> {
+    fun existsByTeamIdAndUserId(
+        teamId: String,
+        userId: String,
+    ): Boolean
+
     fun findByTeamIdAndUserId(
         teamId: String,
         userId: String,
