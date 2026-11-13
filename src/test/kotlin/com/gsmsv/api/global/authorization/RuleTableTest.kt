@@ -15,7 +15,7 @@ class RuleTableTest {
             Action.TRANSFER_LEADER,
             Action.REVOKE_DEVOPS,
         )
-    private val adminOnlyActions = setOf(Action.APPROVE_TEAM, Action.APPROVE_DISBAND_TEAM)
+    private val adminOnlyActions = setOf(Action.APPROVE_TEAM, Action.APPROVE_DISBAND_TEAM, Action.VIEW_INFRA)
 
     @Test
     fun `팀원은 조회·접속 정보 보기·연장·탈퇴만 할 수 있다`() {
