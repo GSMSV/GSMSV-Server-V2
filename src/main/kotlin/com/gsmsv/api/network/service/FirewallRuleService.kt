@@ -62,7 +62,8 @@ class FirewallRuleService(
             val added = store.add(vm.id, spec, PER_VM_LIMIT)
             try {
                 sync(vm.id, internalIp, added.state)
-            } catch (e: BusinessException) {
+            } catch (e: Exception) {
+                // BusinessException 외의 오류(클라이언트 구현이 바뀌어도)로 반영이 실패해도 DB를 되돌려야 한다
                 store.revertAdd(added)
                 throw e
             }
