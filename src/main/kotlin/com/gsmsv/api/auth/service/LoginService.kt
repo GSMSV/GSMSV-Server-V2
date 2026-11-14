@@ -61,7 +61,7 @@ class LoginService(
 
         existing?.let(::requireActive)
         // 관리자 여부는 DataGSM 응답이 아니라 이 서버의 기존 계정 role로 판단한다
-        if (existing?.role != Role.ADMIN && !userInfo.isEnrolled()) {
+        if (!userInfo.isEnrolled()) {
             throw BusinessException(ErrorCode.NOT_ENROLLED)
         }
 
@@ -117,6 +117,7 @@ class LoginService(
                 ErrorCode.OAUTH_EXCHANGE_FAILED,
                 ErrorCode.NOT_ENROLLED,
                 ErrorCode.UPSTREAM_UNAVAILABLE,
+                ErrorCode.RATE_LIMITED,
                 ErrorCode.ACCOUNT_INACTIVE,
             )
     }

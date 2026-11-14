@@ -123,7 +123,7 @@ class LoginStateServiceTest {
 
     @Test
     fun `redirect는 안전한 상대 경로만 받고 나머지는 슬래시로 바꾼다`() {
-        val ok = listOf("/", "/teams", "/teams/team-0123456789ab?tab=1", "/a#b")
+        val ok = listOf("/", "/teams", "/teams/team-0123456789ab?tab=1")
         val bad =
             listOf(
                 null,
@@ -131,6 +131,10 @@ class LoginStateServiceTest {
                 "teams",
                 "//evil.com",
                 "/\\evil.com",
+                "/%2f/evil.com",
+                "/%2F/evil.com",
+                "/%5c/evil.com",
+                "/a#b",
                 "https://evil.com",
                 "/a\\b",
                 "/a\nb",

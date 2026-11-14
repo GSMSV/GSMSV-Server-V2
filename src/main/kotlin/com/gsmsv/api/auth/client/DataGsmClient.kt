@@ -23,7 +23,8 @@ private val log = KotlinLogging.logger {}
  *
  * 실패는 두 가지로 나눠 던진다.
  * - 인가 코드·토큰이 거절됐다(4xx) → [ErrorCode.OAUTH_EXCHANGE_FAILED]
- * - DataGSM이 응답하지 않는다(5xx·429·타임아웃·연결 실패·깨진 응답) → [ErrorCode.UPSTREAM_UNAVAILABLE]
+ * - DataGSM이 응답하지 않는다(5xx·타임아웃·연결 실패·깨진 응답) → [ErrorCode.UPSTREAM_UNAVAILABLE]
+ * - 요청 한도 초과(429) → [ErrorCode.RATE_LIMITED]
  *
  * 인가 코드·토큰·secret은 로그와 예외 메시지에 남기지 않는다. 상태 코드만 남긴다.
  */
@@ -134,11 +135,10 @@ class DataGsmClient(
         } catch (e: RestClientResponseException) {
             val status = e.statusCode.value()
             log.warn { "DataGSM 호출 실패: operation=$operation, status=$status" }
-            // 429·5xx는 DataGSM 쪽 사정이고, 나머지 4xx는 코드·토큰이 거절된 것이다
-            throw if (status == 429 || status >= 500) {
-                BusinessException(ErrorCode.UPSTREAM_UNAVAILABLE, message = UNAVAILABLE_MESSAGE)
-            } else {
-                BusinessException(ErrorCode.OAUTH_EXCHANGE_FAILED)
+            throw when {
+                status == 429 -> BusinessException(ErrorCode.RATE_LIMITED)
+                status >= 500 -> BusinessException(ErrorCode.UPSTREAM_UNAVAILABLE, message = UNAVAILABLE_MESSAGE)
+                else -> BusinessException(ErrorCode.OAUTH_EXCHANGE_FAILED)
             }
         } catch (e: RestClientException) {
             // 타임아웃·연결 실패. 예외 메시지에 주소가 들어갈 수 있어 종류만 남긴다

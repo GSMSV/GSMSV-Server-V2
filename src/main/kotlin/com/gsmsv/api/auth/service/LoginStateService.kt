@@ -96,6 +96,7 @@ class LoginStateService(
         private const val CODE_PREFIX = "tmp_"
         private const val DEFAULT_REDIRECT = "/"
         private const val MAX_REDIRECT_LENGTH = 512
+        private val ENCODED_PATH_SEPARATOR = Regex("(?i)%2f|%5c")
 
         /**
          * 로그인 뒤 돌아갈 경로를 정리한다. 열린 리다이렉트를 막으려고 `/`로 시작하고 `//`·`/\`로 시작하지 않는 상대 경로만 받는다.
@@ -107,6 +108,8 @@ class LoginStateService(
                 redirect.startsWith("/") &&
                     !redirect.startsWith("//") &&
                     !redirect.startsWith("/\\") &&
+                    !redirect.contains('#') &&
+                    !ENCODED_PATH_SEPARATOR.containsMatchIn(redirect) &&
                     redirect.none { it == '\\' || it.isISOControl() }
             return if (valid) redirect else DEFAULT_REDIRECT
         }
