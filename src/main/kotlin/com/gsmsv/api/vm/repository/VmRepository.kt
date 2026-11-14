@@ -31,7 +31,24 @@ interface VmRepository : JpaRepository<Vm, String> {
         @Param("ownerId") ownerId: String,
         @Param("statuses") statuses: Collection<VmStatus>,
     ): VmSpecSum
+
+    /** 선언형 네트워크 상태를 만들 때 쓴다. 자원 객체가 아니라 id와 내부 IP만 읽는다 */
+    @Query(
+        """
+        select new com.gsmsv.api.vm.repository.VmInternalIp(v.id, v.internalIp)
+        from Vm v
+        where v.id in :ids and v.deletedAt is null and v.internalIp is not null
+        """,
+    )
+    fun findInternalIps(
+        @Param("ids") ids: Collection<String>,
+    ): List<VmInternalIp>
 }
+
+data class VmInternalIp(
+    val vmId: String,
+    val internalIp: String,
+)
 
 data class VmSpecSum(
     val vcpu: Long,

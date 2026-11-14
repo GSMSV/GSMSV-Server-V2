@@ -22,6 +22,7 @@ enum class ErrorCode(
     CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "확인 값이 대상과 다릅니다."),
     UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 동작을 할 권한이 없습니다."),
+    ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 중인 이름입니다."),
     ALREADY_MEMBER(HttpStatus.CONFLICT, "이미 팀원입니다."),
     CONFLICT(HttpStatus.CONFLICT, "요청이 현재 상태와 충돌합니다."),
     NOT_SUPPORTED_FOR_DEDICATED(HttpStatus.CONFLICT, "전용형에서는 지원하지 않는 동작입니다."),
@@ -29,8 +30,9 @@ enum class ErrorCode(
     INVITATION_EMAIL_MISMATCH(HttpStatus.FORBIDDEN, "초대 대상 이메일과 로그인한 계정이 다릅니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자원을 찾을 수 없습니다."),
     GONE(HttpStatus.GONE, "초대가 만료되었거나 더 이상 유효하지 않습니다."),
+    VM_NO_INTERNAL_IP(HttpStatus.CONFLICT, "VM에 내부 IP가 아직 없습니다."),
 
-    // 같은 code는 상태도 하나다. 네트워크·데이터베이스 명세는 개수 한도 초과를 422, 앱 명세(app.yaml)는 409로 정했다
+    // 같은 code는 상태도 하나다. 네트워크 명세(network.yaml)는 개수 한도 초과를 422, 앱 명세(app.yaml)는 409로 정했다
     QUOTA_EXCEEDED(HttpStatus.UNPROCESSABLE_CONTENT, "개수 한도를 초과했습니다."),
     APP_QUOTA_EXCEEDED(HttpStatus.CONFLICT, "앱 개수 한도를 초과했습니다."),
     WRITE_LOCKED_OWNER(HttpStatus.UNPROCESSABLE_CONTENT, "용량을 넘어 쓰기가 막힌 상태라 새 DB를 만들 수 없습니다."),
