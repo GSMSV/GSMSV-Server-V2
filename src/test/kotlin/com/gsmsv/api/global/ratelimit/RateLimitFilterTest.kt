@@ -1,5 +1,6 @@
 package com.gsmsv.api.global.ratelimit
 
+import com.gsmsv.api.auth.config.AuthProperties
 import com.gsmsv.api.global.security.AuthenticatedUser
 import com.gsmsv.api.global.security.Role
 import org.junit.jupiter.api.AfterEach
@@ -19,7 +20,12 @@ class RateLimitFilterTest {
     private fun filter(
         vararg rules: RateLimitProperties.Rule,
         enabled: Boolean = true,
-    ) = RateLimitFilter(RateLimitProperties(enabled, rules.toList()), RateLimiter(), JsonMapper.builder().build())
+    ) = RateLimitFilter(
+        RateLimitProperties(enabled, rules.toList()),
+        RateLimiter(),
+        JsonMapper.builder().build(),
+        AuthProperties("https://console.test"),
+    )
 
     private val ipRule =
         RateLimitProperties.Rule("login", listOf("/api/v2/auth/**"), RateLimitProperties.Key.IP, 2)
@@ -51,6 +57,20 @@ class RateLimitFilterTest {
         assertEquals("60", response.getHeader("Retry-After"))
         assertTrue(response.contentAsString.contains("\"code\":\"RATE_LIMITED\""))
         assertNotNull(response.getHeader("Retry-After"))
+    }
+
+    @Test
+    fun `로그인 callback 한도 초과는 RATE_LIMITED 오류로 프론트에 보낸다`() {
+        val filter = filter(ipRule)
+        repeat(2) { call(filter, "/api/v2/auth/datagsm/callback") }
+
+        val response = call(filter, "/api/v2/auth/datagsm/callback")
+
+        assertEquals(302, response.status)
+        assertEquals("https://console.test/login?error=RATE_LIMITED", response.getHeader("Location"))
+        assertEquals("no-store", response.getHeader("Cache-Control"))
+        assertEquals("60", response.getHeader("Retry-After"))
+        assertTrue(response.contentAsString.isEmpty())
     }
 
     @Test

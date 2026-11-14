@@ -1,5 +1,6 @@
 package com.gsmsv.api.global.ratelimit
 
+import com.gsmsv.api.auth.config.AuthProperties
 import com.gsmsv.api.global.config.RequestIdFilter
 import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.global.response.ErrorResponse
@@ -8,10 +9,12 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.server.PathContainer
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
+import org.springframework.web.util.UriComponentsBuilder
 import org.springframework.web.util.pattern.PathPattern
 import org.springframework.web.util.pattern.PathPatternParser
 import tools.jackson.databind.json.JsonMapper
@@ -25,6 +28,7 @@ class RateLimitFilter(
     properties: RateLimitProperties,
     private val limiter: RateLimiter,
     private val jsonMapper: JsonMapper,
+    private val authProperties: AuthProperties,
 ) : OncePerRequestFilter() {
     private val enabled = properties.enabled
     private val rules =
@@ -71,6 +75,14 @@ class RateLimitFilter(
         response: HttpServletResponse,
         retryAfterSeconds: Long,
     ) {
+        if (request.requestURI == DATAGSM_CALLBACK_PATH) {
+            response.status = HttpStatus.FOUND.value()
+            response.setHeader(HttpHeaders.LOCATION, rateLimitedLoginLocation())
+            response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+            response.setHeader(HttpHeaders.RETRY_AFTER, retryAfterSeconds.toString())
+            return
+        }
+
         val requestId = request.getAttribute(RequestIdFilter.ATTRIBUTE) as? String ?: RequestIdFilter.generate()
         response.status = ErrorCode.RATE_LIMITED.status.value()
         response.setHeader(HttpHeaders.RETRY_AFTER, retryAfterSeconds.toString())
@@ -80,5 +92,18 @@ class RateLimitFilter(
             response.outputStream,
             ErrorResponse(ErrorCode.RATE_LIMITED.name, ErrorCode.RATE_LIMITED.message, requestId),
         )
+    }
+
+    private fun rateLimitedLoginLocation(): String =
+        UriComponentsBuilder
+            .fromUriString(authProperties.frontendUrl)
+            .path("/login")
+            .queryParam("error", ErrorCode.RATE_LIMITED.name)
+            .encode()
+            .build()
+            .toUriString()
+
+    private companion object {
+        const val DATAGSM_CALLBACK_PATH = "/api/v2/auth/datagsm/callback"
     }
 }
