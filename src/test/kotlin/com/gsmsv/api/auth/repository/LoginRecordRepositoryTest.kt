@@ -32,7 +32,7 @@ class LoginRecordRepositoryTest
         private val now = Instant.parse("2026-01-01T00:00:00Z")
 
         @Test
-        fun `V11 로그인 state 테이블에 code verifier 컬럼이 있다`() {
+        fun `로그인 state 테이블에 code verifier 컬럼이 있다`() {
             val columnCount =
                 jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'auth_login_states' AND column_name = 'code_verifier'",
