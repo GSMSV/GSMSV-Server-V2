@@ -28,14 +28,14 @@ class RefreshTokenService(
     }
 
     @Transactional
-    fun rotate(value: String): RefreshToken {
+    fun consume(value: String): String {
         val tokenHash = LoginStateService.sha256(value)
         val stored = repository.findByHashForUpdate(tokenHash) ?: throw BusinessException(ErrorCode.UNAUTHENTICATED)
         if (!stored.expiresAt.isAfter(clock.instant())) {
             throw BusinessException(ErrorCode.UNAUTHENTICATED)
         }
         if (repository.delete(tokenHash) != 1) throw BusinessException(ErrorCode.UNAUTHENTICATED)
-        return issue(stored.userId)
+        return stored.userId
     }
 
     @Transactional

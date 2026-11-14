@@ -59,7 +59,8 @@ class TokenServiceTest {
     fun `활성 사용자의 refresh token을 회전하고 새 access token을 발급한다`() {
         val rotated = RefreshToken(user.id, "rotated", Instant.parse("2026-01-15T00:00:00Z"))
         val access = AccessToken("new-access", Duration.ofMinutes(15))
-        every { refreshTokenService.rotate("old-refresh") } returns rotated
+        every { refreshTokenService.consume("old-refresh") } returns user.id
+        every { refreshTokenService.issue(user.id) } returns rotated
         every { userService.findById(user.id) } returns user
         every { tokenProvider.issue(user.id, user.role) } returns access
 
@@ -68,17 +69,18 @@ class TokenServiceTest {
         assertEquals(user, result.user)
         assertEquals(rotated, result.refreshToken)
         assertEquals(access, result.accessToken)
-        verify(exactly = 1) { refreshTokenService.rotate("old-refresh") }
+        verify(exactly = 1) { refreshTokenService.consume("old-refresh") }
+        verify(exactly = 1) { refreshTokenService.issue(user.id) }
     }
 
     @Test
     fun `탈퇴한 계정은 refresh를 거절한다`() {
         val withdrawn = User(user.id, "dgs-1", "user@example.test", "사용자", deletedAt = Instant.parse("2026-01-01T00:00:00Z"))
-        every { refreshTokenService.rotate("old-refresh") } returns
-            RefreshToken(user.id, "rotated", Instant.parse("2026-01-15T00:00:00Z"))
+        every { refreshTokenService.consume("old-refresh") } returns user.id
         every { userService.findById(user.id) } returns withdrawn
 
         assertEquals(ErrorCode.GONE, assertFailsWith<BusinessException> { service.refresh("old-refresh") }.errorCode)
         verify(exactly = 0) { tokenProvider.issue(any(), any()) }
+        verify(exactly = 0) { refreshTokenService.issue(any()) }
     }
 }

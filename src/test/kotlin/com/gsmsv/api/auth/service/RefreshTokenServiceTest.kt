@@ -21,26 +21,26 @@ class RefreshTokenServiceTest {
     private val tokenHash = LoginStateService.sha256("old-refresh")
 
     @Test
-    fun `유효한 refresh token을 한 번만 소비하고 새 토큰을 저장한다`() {
+    fun `유효한 refresh token을 한 번만 소비한다`() {
         every { repository.findByHashForUpdate(tokenHash) } returns
             StoredRefreshToken("user-0123456789ab", Instant.parse("2026-11-21T00:00:00Z"))
         every { repository.delete(tokenHash) } returns 1
 
-        val rotated = service.rotate("old-refresh")
+        val userId = service.consume("old-refresh")
 
-        assertEquals("user-0123456789ab", rotated.userId)
+        assertEquals("user-0123456789ab", userId)
         verify(exactly = 1) { repository.delete(tokenHash) }
-        verify(exactly = 1) { repository.save(any(), rotated.userId, clock.instant(), rotated.expiresAt) }
+        verify(exactly = 0) { repository.save(any(), any(), any(), any()) }
     }
 
     @Test
     fun `재사용되거나 만료된 refresh token은 거절한다`() {
         every { repository.findByHashForUpdate(tokenHash) } returns null
 
-        assertEquals(ErrorCode.UNAUTHENTICATED, assertFailsWith<BusinessException> { service.rotate("old-refresh") }.errorCode)
+        assertEquals(ErrorCode.UNAUTHENTICATED, assertFailsWith<BusinessException> { service.consume("old-refresh") }.errorCode)
         every { repository.findByHashForUpdate(tokenHash) } returns
             StoredRefreshToken("user-0123456789ab", clock.instant())
-        assertEquals(ErrorCode.UNAUTHENTICATED, assertFailsWith<BusinessException> { service.rotate("old-refresh") }.errorCode)
+        assertEquals(ErrorCode.UNAUTHENTICATED, assertFailsWith<BusinessException> { service.consume("old-refresh") }.errorCode)
         verify(exactly = 0) { repository.save(any(), any(), any(), any()) }
     }
 

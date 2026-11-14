@@ -46,10 +46,11 @@ class TokenService(
 
     @Transactional(noRollbackFor = [BusinessException::class])
     fun refresh(refreshTokenValue: String): RefreshedTokens {
-        val refreshToken = refreshTokenService.rotate(refreshTokenValue)
-        val user = userService.findById(refreshToken.userId) ?: throw BusinessException(ErrorCode.GONE)
+        val userId = refreshTokenService.consume(refreshTokenValue)
+        val user = userService.findById(userId) ?: throw BusinessException(ErrorCode.GONE)
         if (user.deletedAt != null) throw BusinessException(ErrorCode.GONE)
         if (user.status != UserStatus.ACTIVE) throw BusinessException(ErrorCode.ACCOUNT_INACTIVE)
+        val refreshToken = refreshTokenService.issue(user.id)
         return RefreshedTokens(user, tokenProvider.issue(user.id, user.role), refreshToken)
     }
 
