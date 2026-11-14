@@ -31,9 +31,11 @@ class LoginRecordRepositoryTest
 
         @Test
         fun `state는 한 번만 소모된다`() {
-            repository.saveState("hash-1", "/teams", now, now.plusSeconds(300))
+            repository.saveState("hash-1", "/teams", "pkce-verifier", now, now.plusSeconds(300))
 
-            assertEquals("/teams", repository.consumeState("hash-1", now)?.redirect)
+            val state = repository.consumeState("hash-1", now)
+            assertEquals("/teams", state?.redirect)
+            assertEquals("pkce-verifier", state?.codeVerifier)
             assertNull(repository.consumeState("hash-1", now))
         }
 

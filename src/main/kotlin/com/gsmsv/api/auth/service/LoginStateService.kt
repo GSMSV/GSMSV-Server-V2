@@ -1,5 +1,6 @@
 package com.gsmsv.api.auth.service
 
+import com.gsmsv.api.auth.client.DataGsmAuthorizationRequest
 import com.gsmsv.api.auth.domain.LoginCode
 import com.gsmsv.api.auth.domain.LoginState
 import com.gsmsv.api.auth.repository.LoginRecordRepository
@@ -28,11 +29,27 @@ class LoginStateService(
 
     /** state를 발급한다. [redirect]는 [sanitizeRedirect]로 정리해 함께 저장한다 */
     @Transactional
-    fun issueState(redirect: String?): String {
+    fun issueState(
+        redirect: String?,
+        codeVerifier: String = "",
+    ): String {
         val state = randomValue()
         val now = clock.instant()
-        repository.saveState(sha256(state), sanitizeRedirect(redirect), now, now.plus(STATE_TTL))
+        repository.saveState(sha256(state), sanitizeRedirect(redirect), codeVerifier, now, now.plus(STATE_TTL))
         return state
+    }
+
+    /** PKCE verifier를 발급한 인가 요청과 함께 state를 저장하고 인가 URI를 돌려준다. */
+    @Transactional
+    fun createAuthorizationRequest(
+        redirect: String?,
+        requestFactory: (String) -> DataGsmAuthorizationRequest,
+    ): String {
+        val state = randomValue()
+        val request = requestFactory(state)
+        val now = clock.instant()
+        repository.saveState(sha256(state), sanitizeRedirect(redirect), request.codeVerifier, now, now.plus(STATE_TTL))
+        return request.authorizationUri
     }
 
     /** state를 소모한다. 없거나 이미 썼거나 만료됐으면 [ErrorCode.OAUTH_STATE_INVALID] */
