@@ -20,6 +20,7 @@ enum class ErrorCode(
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 동작을 할 권한이 없습니다."),
     ALREADY_MEMBER(HttpStatus.CONFLICT, "이미 팀원입니다."),
     CONFLICT(HttpStatus.CONFLICT, "요청이 현재 상태와 충돌합니다."),
+    NOT_SUPPORTED_FOR_DEDICATED(HttpStatus.CONFLICT, "전용형에서는 지원하지 않는 동작입니다."),
     TEAM_NOT_APPROVED(HttpStatus.FORBIDDEN, "승인되지 않은 팀은 이 동작을 할 수 없습니다."),
     INVITATION_EMAIL_MISMATCH(HttpStatus.FORBIDDEN, "초대 대상 이메일과 로그인한 계정이 다릅니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자원을 찾을 수 없습니다."),
