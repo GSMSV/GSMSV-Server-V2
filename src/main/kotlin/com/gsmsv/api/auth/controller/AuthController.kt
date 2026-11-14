@@ -1,6 +1,7 @@
 package com.gsmsv.api.auth.controller
 
 import com.gsmsv.api.auth.service.LoginService
+import com.gsmsv.api.auth.service.LoginStateService
 import com.gsmsv.api.auth.service.TokenService
 import com.gsmsv.api.global.authorization.Public
 import com.gsmsv.api.global.exception.BusinessException
@@ -47,7 +48,7 @@ class AuthController(
     @GetMapping("/datagsm/authorize")
     fun authorize(
         @RequestParam(required = false) redirect: String?,
-    ): ResponseEntity<Void> = redirectTo(loginService.startLogin(redirect))
+    ): ResponseEntity<Void> = redirectTo(loginService.startLogin(LoginStateService.sanitizeRedirect(redirect)))
 
     @Public
     @GetMapping("/datagsm/callback")

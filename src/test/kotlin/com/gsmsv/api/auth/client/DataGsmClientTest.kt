@@ -108,10 +108,10 @@ class DataGsmClientTest {
     }
 
     @Test
-    fun `요청 한도 429도 UPSTREAM_UNAVAILABLE이다`() {
+    fun `요청 한도 429는 RATE_LIMITED이다`() {
         authServer.expect(requestTo("http://auth.test/v1/oauth/token")).andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS))
 
-        assertEquals(ErrorCode.UPSTREAM_UNAVAILABLE, assertFailsWith<BusinessException> { client.exchangeCode("x") }.errorCode)
+        assertEquals(ErrorCode.RATE_LIMITED, assertFailsWith<BusinessException> { client.exchangeCode("x") }.errorCode)
     }
 
     @Test
