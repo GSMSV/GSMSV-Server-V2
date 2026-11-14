@@ -64,7 +64,7 @@ class AppCommandService(
         val ownerType = if (owner is Owner.User) AppOwnerType.USER else AppOwnerType.TEAM
         quotaLock.lock(ownerType, owner.id)
         if (appRepository.countByOwnerTypeAndOwnerId(ownerType, owner.id) >= limit) {
-            throw BusinessException(ErrorCode.QUOTA_EXCEEDED)
+            throw BusinessException(ErrorCode.APP_QUOTA_EXCEEDED)
         }
         val creatorName = userService.findSummariesByIds(listOf(user.userId)).getValue(user.userId).name
         val app =

@@ -25,6 +25,18 @@ class VmService(
     @Transactional(readOnly = true)
     fun teamUsage(teamId: String): VmUsage = usageOf(Vm.OwnerType.TEAM, teamId)
 
+    /**
+     * VM id → 내부 IP. 활성 도메인 전체로 HTTPS 라우트를 만들 때처럼 DB 전체로 선언형 상태를 만드는 데만 쓴다.
+     * 권한 판단을 거친 자원 객체가 아니므로 사용자 응답에 쓰지 않는다. 지워졌거나 내부 IP가 없는 VM은 빠진다.
+     */
+    @Transactional(readOnly = true)
+    fun internalIpsOf(vmIds: Collection<String>): Map<String, String> =
+        if (vmIds.isEmpty()) {
+            emptyMap()
+        } else {
+            vmRepository.findInternalIps(vmIds).associate { it.vmId to it.internalIp }
+        }
+
     private fun usageOf(
         ownerType: Vm.OwnerType,
         ownerId: String,
