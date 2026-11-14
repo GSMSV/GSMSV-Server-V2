@@ -142,7 +142,8 @@ class DataGsmClient(
             }
         } catch (e: RestClientException) {
             // 타임아웃·연결 실패. 예외 메시지에 주소가 들어갈 수 있어 종류만 남긴다
-            log.warn { "DataGSM 호출 실패: operation=$operation, cause=${e.javaClass.simpleName}" }
+            val causeType = e.cause?.javaClass?.simpleName ?: e.javaClass.simpleName
+            log.warn { "DataGSM 호출 실패: operation=$operation, cause=${e.javaClass.simpleName}, rootCause=$causeType" }
             throw BusinessException(ErrorCode.UPSTREAM_UNAVAILABLE, message = UNAVAILABLE_MESSAGE)
         } catch (e: JacksonException) {
             throw unavailable(operation, "응답 형식 오류")

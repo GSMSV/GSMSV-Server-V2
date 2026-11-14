@@ -19,6 +19,12 @@ data class IssuedTokens(
     val redirect: String,
 )
 
+data class RefreshedTokens(
+    val user: User,
+    val accessToken: AccessToken,
+    val refreshToken: RefreshToken,
+)
+
 @Service
 class TokenService(
     private val loginStateService: LoginStateService,
@@ -37,4 +43,17 @@ class TokenService(
         val refreshToken = refreshTokenService.issue(user.id)
         return IssuedTokens(user, accessToken, refreshToken, loginCode.redirect)
     }
+
+    @Transactional
+    fun refresh(refreshTokenValue: String): RefreshedTokens {
+        val userId = refreshTokenService.consume(refreshTokenValue)
+        val user = userService.findById(userId) ?: throw BusinessException(ErrorCode.GONE)
+        if (user.deletedAt != null) throw BusinessException(ErrorCode.GONE)
+        if (user.status != UserStatus.ACTIVE) throw BusinessException(ErrorCode.ACCOUNT_INACTIVE)
+        val refreshToken = refreshTokenService.issue(user.id)
+        return RefreshedTokens(user, tokenProvider.issue(user.id, user.role), refreshToken)
+    }
+
+    @Transactional
+    fun logout(refreshTokenValue: String?) = refreshTokenService.revoke(refreshTokenValue)
 }

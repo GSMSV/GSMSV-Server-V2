@@ -63,6 +63,8 @@ class SecurityConfig : WebMvcConfigurer {
                 "/api/v2/auth/datagsm/authorize",
                 "/api/v2/auth/datagsm/callback",
                 "/api/v2/auth/token-exchange",
+                "/api/v2/auth/refresh",
+                "/api/v2/auth/logout",
             )
     }
 }
