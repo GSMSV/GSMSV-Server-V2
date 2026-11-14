@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import kotlin.test.assertEquals
@@ -26,14 +27,28 @@ class LoginRecordRepositoryTest
     constructor(
         private val repository: LoginRecordRepository,
         private val userRepository: UserRepository,
+        private val jdbcTemplate: JdbcTemplate,
     ) {
         private val now = Instant.parse("2026-01-01T00:00:00Z")
 
         @Test
-        fun `state는 한 번만 소모된다`() {
-            repository.saveState("hash-1", "/teams", now, now.plusSeconds(300))
+        fun `로그인 state 테이블에 code verifier 컬럼이 있다`() {
+            val columnCount =
+                jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'auth_login_states' AND column_name = 'code_verifier'",
+                    Int::class.java,
+                )
 
-            assertEquals("/teams", repository.consumeState("hash-1", now)?.redirect)
+            assertEquals(1, columnCount)
+        }
+
+        @Test
+        fun `state는 한 번만 소모된다`() {
+            repository.saveState("hash-1", "/teams", "pkce-verifier", now, now.plusSeconds(300))
+
+            val state = repository.consumeState("hash-1", now)
+            assertEquals("/teams", state?.redirect)
+            assertEquals("pkce-verifier", state?.codeVerifier)
             assertNull(repository.consumeState("hash-1", now))
         }
 

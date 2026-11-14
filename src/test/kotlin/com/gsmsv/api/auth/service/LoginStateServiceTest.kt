@@ -1,5 +1,6 @@
 package com.gsmsv.api.auth.service
 
+import com.gsmsv.api.auth.client.DataGsmAuthorizationRequest
 import com.gsmsv.api.auth.domain.LoginCode
 import com.gsmsv.api.auth.domain.LoginState
 import com.gsmsv.api.auth.repository.LoginRecordRepository
@@ -28,16 +29,38 @@ class LoginStateServiceTest {
     fun `state를 발급하면 해시와 정리한 redirect와 5분 만료를 저장한다`() {
         val hash = slot<String>()
         val redirect = slot<String>()
+        val codeVerifier = slot<String>()
         val expiresAt = slot<Instant>()
-        every { repository.saveState(capture(hash), capture(redirect), now, capture(expiresAt)) } returns Unit
+        every { repository.saveState(capture(hash), capture(redirect), capture(codeVerifier), now, capture(expiresAt)) } returns Unit
 
-        val state = service.issueState("/teams")
+        val state = service.issueState("/teams", "pkce-verifier")
 
         assertEquals(LoginStateService.sha256(state), hash.captured)
         assertFalse(hash.captured.contains(state), "원본 값은 저장하지 않는다")
         assertEquals("/teams", redirect.captured)
+        assertEquals("pkce-verifier", codeVerifier.captured)
         assertEquals(now.plusSeconds(300), expiresAt.captured)
         assertTrue(state.length >= 43, "32바이트 이상의 랜덤 값")
+    }
+
+    @Test
+    fun `인가 요청을 만들 때 state와 PKCE verifier를 저장한다`() {
+        val stateValue = slot<String>()
+        val codeVerifier = slot<String>()
+        val redirect = slot<String>()
+        every {
+            repository.saveState(any(), capture(redirect), capture(codeVerifier), now, any())
+        } returns Unit
+
+        val uri =
+            service.createAuthorizationRequest("/teams") { state ->
+                stateValue.captured = state
+                DataGsmAuthorizationRequest("https://datagsm.test/auth?state=$state", "pkce-verifier")
+            }
+
+        assertEquals("/teams", redirect.captured)
+        assertEquals("pkce-verifier", codeVerifier.captured)
+        assertTrue(uri.contains(stateValue.captured))
     }
 
     @Test
@@ -69,9 +92,12 @@ class LoginStateServiceTest {
 
     @Test
     fun `state를 소모하면 저장한 redirect를 돌려준다`() {
-        every { repository.consumeState(LoginStateService.sha256("s1"), now) } returns LoginState("/teams")
+        every { repository.consumeState(LoginStateService.sha256("s1"), now) } returns LoginState("/teams", "pkce-verifier")
 
-        assertEquals("/teams", service.consumeState("s1").redirect)
+        val state = service.consumeState("s1")
+
+        assertEquals("/teams", state.redirect)
+        assertEquals("pkce-verifier", state.codeVerifier)
     }
 
     @Test

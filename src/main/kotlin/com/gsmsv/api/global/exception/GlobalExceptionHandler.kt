@@ -40,7 +40,18 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleBusinessException(
         exception: BusinessException,
         request: HttpServletRequest,
-    ): ResponseEntity<ErrorResponse> = errorResponse(exception.errorCode, requestIdOf(request), exception.details, exception.message)
+    ): ResponseEntity<ErrorResponse> =
+        ResponseEntity
+            .status(exception.errorCode.status)
+            .headers(exception.responseHeaders)
+            .body(
+                ErrorResponse(
+                    exception.errorCode.name,
+                    exception.message,
+                    requestIdOf(request),
+                    exception.details,
+                ),
+            )
 
     @ExceptionHandler(Exception::class)
     fun handleUnexpectedException(
