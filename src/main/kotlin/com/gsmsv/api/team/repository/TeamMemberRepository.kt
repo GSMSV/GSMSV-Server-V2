@@ -1,5 +1,6 @@
 package com.gsmsv.api.team.repository
 
+import com.gsmsv.api.global.authorization.TeamRole
 import com.gsmsv.api.team.domain.TeamMember
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -21,6 +22,11 @@ interface TeamMemberRepository : JpaRepository<TeamMember, String> {
     fun findAllByUserId(userId: String): List<TeamMember>
 
     fun findAllByTeamIdOrderByIdAsc(teamId: String): List<TeamMember>
+
+    fun findAllByTeamIdInAndRole(
+        teamIds: Collection<String>,
+        role: TeamRole,
+    ): List<TeamMember>
 
     @Query(
         """
