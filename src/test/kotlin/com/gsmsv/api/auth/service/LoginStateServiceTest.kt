@@ -81,6 +81,16 @@ class LoginStateServiceTest {
     }
 
     @Test
+    fun `임시 코드 발급 때 redirect도 다시 검증한다`() {
+        val redirect = slot<String>()
+        every { repository.saveCode(any(), any(), capture(redirect), now, any()) } returns Unit
+
+        service.issueCode("user-0123456789ab", "//evil.example")
+
+        assertEquals("/", redirect.captured)
+    }
+
+    @Test
     fun `state를 소모하면 저장한 redirect를 돌려준다`() {
         every { repository.consumeState(LoginStateService.sha256("s1"), now) } returns LoginState("/teams", "pkce-verifier")
 

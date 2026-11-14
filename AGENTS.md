@@ -23,6 +23,8 @@ GSMSV v2의 Kotlin API 서버(Spring Boot)다. AI 코딩 도구(Claude Code, Cod
 ./gradlew ktlintFormat                       # 스타일 자동 수정
 ./gradlew test --tests 'com.gsmsv.api.vm.*'  # 관련 테스트만 (4장)
 node --test .claude/hooks/test/hooks.test.mjs  # .claude/hooks/를 고쳤을 때
+BASE_REF=develop node .github/scripts/check-migrations.mjs  # 마이그레이션을 추가했을 때 (2.3)
+date -u +V%Y%m%d%H%M%S                       # 새 마이그레이션 파일의 버전 (2.3)
 ```
 
 - 전체 테스트(`./gradlew test`)는 로컬에서 돌리지 않는다. CI가 한다
@@ -97,8 +99,11 @@ node --test .claude/hooks/test/hooks.test.mjs  # .claude/hooks/를 고쳤을 때
 - 엔티티는 `data class` 금지
 - 상태는 엔티티 메서드로만 바꾼다 (외부에서 필드에 직접 대입하지 않는다)
 - 연관관계는 기본 `FetchType.LAZY`
-- 마이그레이션 파일 이름은 `V{번호}__{설명}.sql` (밑줄 2개)
-- develop에 병합된 마이그레이션은 수정하지 않는다. 고칠 게 있으면 새 버전을 추가한다
+- 마이그레이션 파일 이름은 `V{UTC 타임스탬프}__{설명}.sql` (밑줄 2개, 설명은 영어 소문자 snake_case). 버전은 `date -u +V%Y%m%d%H%M%S`로 만든 14자리다 (예: `V20261114103000__create_port_forwards.sql`)
+  - **번호를 순서대로 올리지 않는다.** 번호는 작성 시점에 정해지는데 순차 번호는 병합 순서를 뜻해서, 병렬 브랜치가 있으면 항상 겹친다. `V1`~`V10`은 이 규칙 전에 병합된 것이라 그대로 둔다
+  - 그래서 `spring.flyway.out-of-order`를 켜 뒀다. **마이그레이션끼리 서로 의존하면 안 된다.** 다른 작업이 만드는 테이블을 참조해야 하면 두 작업을 한 PR로 합친다
+- develop에 병합된 마이그레이션은 수정하지 않는다 (지우거나 이름을 바꾸는 것도 안 된다. 체크섬이 달라져 기동이 깨진다). 고칠 게 있으면 새 버전을 추가한다
+- 위 두 규칙은 PR에서 `.github/scripts/check-migrations.mjs`가 검사한다 (CI의 "마이그레이션 검사")
 
 ## 3. 구조
 

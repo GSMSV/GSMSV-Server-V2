@@ -24,6 +24,9 @@ spring:
           time_zone: UTC
   flyway:
     locations: classpath:db/migration
+    # 마이그레이션 버전은 타임스탬프라 병합 순서와 어긋날 수 있다. 먼저 만들고 나중에 병합된 것도 적용하게 둔다.
+    # 전제는 마이그레이션끼리 서로 의존하지 않는 것이다 (AGENTS.md 2.3)
+    out-of-order: true
 
 gsmsv:
   auth:
