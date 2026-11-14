@@ -4,7 +4,8 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class RuleTableTest {
-    private val memberActions = setOf(Action.VIEW, Action.VIEW_ACCESS_INFO, Action.EXTEND, Action.LEAVE_TEAM)
+    private val memberActions =
+        setOf(Action.VIEW, Action.VIEW_ACCESS_INFO, Action.EXTEND, Action.READ_BACKUP, Action.LEAVE_TEAM)
     private val leaderOnlyActions =
         setOf(
             Action.INVITE_MEMBER,
@@ -18,7 +19,7 @@ class RuleTableTest {
     private val adminOnlyActions = setOf(Action.APPROVE_TEAM, Action.APPROVE_DISBAND_TEAM)
 
     @Test
-    fun `팀원은 조회·접속 정보 보기·연장·탈퇴만 할 수 있다`() {
+    fun `팀원은 조회·접속 정보 보기·연장·백업 내려받기·탈퇴만 할 수 있다`() {
         assertEquals(memberActions, allowedActions(TeamRole.MEMBER))
     }
 
