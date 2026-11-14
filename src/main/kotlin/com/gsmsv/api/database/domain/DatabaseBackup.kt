@@ -36,4 +36,7 @@ class DatabaseBackup(
 ) : SubResource {
     override val parentId: String
         get() = databaseId
+
+    /** 보관 기간이 지났는지. 목록(7.10)과 같은 기준이다 */
+    fun isExpiredAt(now: Instant): Boolean = !expiresAt.isAfter(now)
 }
