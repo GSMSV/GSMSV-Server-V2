@@ -50,6 +50,9 @@ enum class Action(
     FIREWALL(Grant.LEADER_OR_DEVOPS),
     DOMAIN(Grant.LEADER_OR_DEVOPS),
 
+    /** 데이터베이스 계정 비밀번호 교체 (24번 DBaaS 2장 "설정 변경(비밀번호 교체 포함)") */
+    ROTATE_PASSWORD(Grant.LEADER_OR_DEVOPS),
+
     INVITE_MEMBER(Grant.LEADER_ONLY),
     RESUBMIT_TEAM(Grant.LEADER_ONLY),
     REMOVE_MEMBER(Grant.LEADER_ONLY),

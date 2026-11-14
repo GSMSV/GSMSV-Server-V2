@@ -110,6 +110,17 @@ class DatabaseTest {
         assertEquals(DB_ID, database.id)
     }
 
+    @Test
+    fun `비밀번호는 처음에 없고 암호화한 값으로만 바꾼다`() {
+        val database = newDatabase()
+        assertEquals(null, database.passwordEncrypted)
+
+        database.changePassword("encrypted-value")
+
+        assertEquals("encrypted-value", database.passwordEncrypted)
+        assertFailsWith<IllegalArgumentException> { database.changePassword(" ") }
+    }
+
     private fun newDatabase(owner: Owner = Owner.User(USER_ID)) =
         Database.create(
             id = DB_ID,

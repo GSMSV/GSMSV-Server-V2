@@ -70,6 +70,11 @@ class Database(
     final var deletedAt: Instant? = null
         private set
 
+    /** 계정 비밀번호를 암호화한 값. 평문은 두지 않는다. 공유 DB 서버에 계정을 만들기 전에는 없다 */
+    @Column(name = "password_encrypted", columnDefinition = "text")
+    final var passwordEncrypted: String? = null
+        private set
+
     override val owner: Owner
         get() =
             when (ownerType) {
@@ -108,6 +113,12 @@ class Database(
         if (status == DatabaseStatus.SUSPENDED) {
             status = DatabaseStatus.ACTIVE
         }
+    }
+
+    /** 계정을 만들거나 비밀번호를 바꾼 뒤 암호화한 새 값을 남긴다 */
+    fun changePassword(encrypted: String) {
+        require(encrypted.isNotBlank()) { "암호화한 비밀번호가 비어 있습니다." }
+        passwordEncrypted = encrypted
     }
 
     fun lockWrites() {
