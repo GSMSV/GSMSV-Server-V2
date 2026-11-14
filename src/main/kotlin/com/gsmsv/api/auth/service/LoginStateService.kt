@@ -49,7 +49,7 @@ class LoginStateService(
     ): String {
         val code = CODE_PREFIX + randomValue()
         val now = clock.instant()
-        repository.saveCode(sha256(code), userId, redirect, now, now.plus(CODE_TTL))
+        repository.saveCode(sha256(code), userId, sanitizeRedirect(redirect), now, now.plus(CODE_TTL))
         return code
     }
 
