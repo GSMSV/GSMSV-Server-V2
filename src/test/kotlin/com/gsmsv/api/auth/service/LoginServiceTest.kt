@@ -24,7 +24,7 @@ class LoginServiceTest {
         )
 
     @Test
-    fun `userinfo 503은 UPSTREAM_UNAVAILABLE 콜백 주소로 매핑된다`() {
+    fun `userinfo UPSTREAM_UNAVAILABLE 예외는 콜백 주소로 전달된다`() {
         every { loginStateService.consumeState("state") } returns LoginState("/", "verifier")
         every { dataGsmClient.exchangeCode("code", "verifier") } returns DataGsmToken("access-token")
         every { dataGsmClient.fetchUserInfo("access-token") } throws
