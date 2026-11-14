@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import kotlin.test.assertEquals
@@ -26,8 +27,20 @@ class LoginRecordRepositoryTest
     constructor(
         private val repository: LoginRecordRepository,
         private val userRepository: UserRepository,
+        private val jdbcTemplate: JdbcTemplate,
     ) {
         private val now = Instant.parse("2026-01-01T00:00:00Z")
+
+        @Test
+        fun `V11 로그인 state 테이블에 code verifier 컬럼이 있다`() {
+            val columnCount =
+                jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'auth_login_states' AND column_name = 'code_verifier'",
+                    Int::class.java,
+                )
+
+            assertEquals(1, columnCount)
+        }
 
         @Test
         fun `state는 한 번만 소모된다`() {
