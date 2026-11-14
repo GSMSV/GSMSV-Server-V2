@@ -25,7 +25,10 @@ enum class ErrorCode(
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자원을 찾을 수 없습니다."),
     GONE(HttpStatus.GONE, "초대가 만료되었거나 더 이상 유효하지 않습니다."),
     VM_NO_INTERNAL_IP(HttpStatus.CONFLICT, "VM에 내부 IP가 아직 없습니다."),
+
+    // 같은 code는 상태도 하나다. 네트워크 명세(network.yaml)는 개수 한도 초과를 422, 앱 명세(app.yaml)는 409로 정했다
     QUOTA_EXCEEDED(HttpStatus.UNPROCESSABLE_CONTENT, "개수 한도를 초과했습니다."),
+    APP_QUOTA_EXCEEDED(HttpStatus.CONFLICT, "앱 개수 한도를 초과했습니다."),
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 API가 없습니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "이 API에서 지원하지 않는 HTTP 메서드입니다."),
     UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 Content-Type입니다."),
