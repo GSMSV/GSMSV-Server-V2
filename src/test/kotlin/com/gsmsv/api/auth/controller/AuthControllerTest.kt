@@ -1,6 +1,8 @@
 package com.gsmsv.api.auth.controller
 
 import com.gsmsv.api.auth.service.LoginService
+import com.gsmsv.api.auth.service.TokenService
+import com.gsmsv.api.global.security.AuthCookieWriter
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -9,7 +11,9 @@ import kotlin.test.assertEquals
 
 class AuthControllerTest {
     private val loginService = mockk<LoginService>()
-    private val controller = AuthController(loginService)
+    private val tokenService = mockk<TokenService>()
+    private val cookieWriter = mockk<AuthCookieWriter>()
+    private val controller = AuthController(loginService, tokenService, cookieWriter)
 
     @Test
     fun `authorize는 외부 주소 redirect를 루트 경로로 정리한다`() {
