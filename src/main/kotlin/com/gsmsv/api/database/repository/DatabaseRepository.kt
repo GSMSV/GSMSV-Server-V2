@@ -19,6 +19,12 @@ interface DatabaseRepository : JpaRepository<Database, String> {
         ownerId: String,
     ): Long
 
+    /** 용량을 넘어 쓰기가 막힌 DB가 하나라도 있으면 그 소유자는 새 DB를 만들 수 없다 */
+    fun existsByOwnerTypeAndOwnerIdAndWriteLockedTrueAndDeletedAtIsNull(
+        ownerType: Database.OwnerType,
+        ownerId: String,
+    ): Boolean
+
     fun findAllByOwnerTypeAndOwnerIdInAndDeletedAtIsNull(
         ownerType: Database.OwnerType,
         ownerIds: Collection<String>,

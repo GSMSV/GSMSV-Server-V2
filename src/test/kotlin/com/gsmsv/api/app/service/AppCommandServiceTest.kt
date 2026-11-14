@@ -91,10 +91,10 @@ class AppCommandServiceTest {
     @Test
     fun `개인 두 개와 팀 네 개 한도에서 추가 생성을 막는다`() {
         every { repository.countByOwnerTypeAndOwnerId(AppOwnerType.USER, USER_ID) } returns 2
-        assertEquals(ErrorCode.QUOTA_EXCEEDED, assertThrows<BusinessException> { service.createPersonalApp(user, "앱") }.errorCode)
+        assertEquals(ErrorCode.APP_QUOTA_EXCEEDED, assertThrows<BusinessException> { service.createPersonalApp(user, "앱") }.errorCode)
         every { repository.countByOwnerTypeAndOwnerId(AppOwnerType.TEAM, TEAM_ID) } returns 4
         assertEquals(
-            ErrorCode.QUOTA_EXCEEDED,
+            ErrorCode.APP_QUOTA_EXCEEDED,
             assertThrows<BusinessException> { service.createTeamApp(user, Team(TEAM_ID, "팀", TeamStatus.APPROVED), "앱") }.errorCode,
         )
         verify(exactly = 0) { repository.save(any()) }
