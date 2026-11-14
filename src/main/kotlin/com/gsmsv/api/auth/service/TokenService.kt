@@ -44,7 +44,7 @@ class TokenService(
         return IssuedTokens(user, accessToken, refreshToken, loginCode.redirect)
     }
 
-    @Transactional(noRollbackFor = [BusinessException::class])
+    @Transactional
     fun refresh(refreshTokenValue: String): RefreshedTokens {
         val userId = refreshTokenService.consume(refreshTokenValue)
         val user = userService.findById(userId) ?: throw BusinessException(ErrorCode.GONE)

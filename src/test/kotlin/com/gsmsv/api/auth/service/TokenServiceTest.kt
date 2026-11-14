@@ -14,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
+import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
@@ -26,6 +27,13 @@ class TokenServiceTest {
     private val refreshTokenService = mockk<RefreshTokenService>()
     private val service = TokenService(loginStateService, userService, tokenProvider, refreshTokenService)
     private val user = User("user-0123456789ab", "dgs-1", "user@example.test", "사용자", Role.USER)
+
+    @Test
+    fun `refresh는 기본 롤백 규칙을 사용해 토큰 소모와 회전을 원자적으로 처리한다`() {
+        val transaction = TokenService::class.java.getMethod("refresh", String::class.java).getAnnotation(Transactional::class.java)
+
+        assertEquals(0, transaction.noRollbackFor.size)
+    }
 
     @Test
     fun `유효한 코드면 access token과 refresh token을 발급하고 redirect를 돌려준다`() {
