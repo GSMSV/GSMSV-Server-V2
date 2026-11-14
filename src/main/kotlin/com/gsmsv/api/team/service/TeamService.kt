@@ -39,6 +39,15 @@ class TeamService(
     @Transactional(readOnly = true)
     fun findMemberUserIds(teamId: String): List<String> = teamMemberRepository.findAllByTeamId(teamId).map { it.userId }
 
+    /** 팀 id → 팀장 사용자 id. 팀장이 없는 팀은 결과에 없다 */
+    @Transactional(readOnly = true)
+    fun findLeaderUserIds(teamIds: Collection<String>): Map<String, String> =
+        if (teamIds.isEmpty()) {
+            emptyMap()
+        } else {
+            teamMemberRepository.findAllByTeamIdInAndRole(teamIds, TeamRole.LEADER).associate { it.teamId to it.userId }
+        }
+
     @Transactional
     fun addMember(
         teamId: String,

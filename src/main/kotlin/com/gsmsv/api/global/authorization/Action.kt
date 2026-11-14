@@ -61,6 +61,9 @@ enum class Action(
 
     APPROVE_TEAM(Grant.ADMIN_ONLY),
     APPROVE_DISBAND_TEAM(Grant.ADMIN_ONLY),
+
+    /** 관리자 인프라 현황 조회 (11.13~11.15). 특정 자원이 아니라 플랫폼 전체가 대상이다 */
+    VIEW_INFRA(Grant.ADMIN_ONLY),
     ;
 
     /**

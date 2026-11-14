@@ -40,6 +40,22 @@ class AuthorizationPolicy(
             }
         }
 
+    /**
+     * 특정 자원이 없는 플랫폼 전체 동작(관리자 인프라 현황 등)을 판단한다. 관리자 전용 동작만 받는다.
+     * 소유자가 없으므로 관리자 규칙으로만 통과하고, 일반 사용자는 403이다
+     */
+    fun decidePlatform(
+        actor: Actor,
+        action: Action,
+    ): Decision {
+        require(action.grant == Grant.ADMIN_ONLY) { "$action 동작은 자원 없이 판단할 수 없습니다." }
+        return when (actor) {
+            SystemActor -> Decision.Allow
+            is AdminActor -> Decision.AllowAsAdmin
+            is UserActor -> Decision.Forbidden(action.grant, actorRole = null)
+        }
+    }
+
     /** 목록 조회에서 [actor]가 볼 수 있는 소유자. 관리자·SYSTEM은 전체를 보므로 null */
     fun visibleOwners(actor: Actor): Set<Owner>? =
         when (actor) {
