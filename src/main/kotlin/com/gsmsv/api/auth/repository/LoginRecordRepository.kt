@@ -23,11 +23,20 @@ class LoginRecordRepository(
         redirect: String,
         now: Instant,
         expiresAt: Instant,
+    ) = saveState(stateHash, redirect, "", now, expiresAt)
+
+    fun saveState(
+        stateHash: String,
+        redirect: String,
+        codeVerifier: String,
+        now: Instant,
+        expiresAt: Instant,
     ) {
         jdbcTemplate.update(
-            "INSERT INTO auth_login_states (state_hash, redirect, expires_at, created_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO auth_login_states (state_hash, redirect, code_verifier, expires_at, created_at) VALUES (?, ?, ?, ?, ?)",
             stateHash,
             redirect,
+            codeVerifier,
             utc(expiresAt),
             utc(now),
         )
@@ -40,8 +49,8 @@ class LoginRecordRepository(
     ): LoginState? =
         jdbcTemplate
             .query(
-                "DELETE FROM auth_login_states WHERE state_hash = ? AND expires_at > ? RETURNING redirect",
-                { rs, _ -> LoginState(rs.getString("redirect")) },
+                "DELETE FROM auth_login_states WHERE state_hash = ? AND expires_at > ? RETURNING redirect, code_verifier",
+                { rs, _ -> LoginState(rs.getString("redirect"), rs.getString("code_verifier")) },
                 stateHash,
                 utc(now),
             ).firstOrNull()

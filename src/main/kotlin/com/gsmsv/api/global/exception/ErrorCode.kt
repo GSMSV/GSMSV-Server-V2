@@ -15,6 +15,8 @@ enum class ErrorCode(
     INVALID_GRN(HttpStatus.BAD_REQUEST, "GRN 형식이 올바르지 않습니다."),
     GRN_RESOURCE_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "이 API에서 다룰 수 없는 자원 종류입니다."),
     INVALID_RESOURCE_ID(HttpStatus.BAD_REQUEST, "id 형식이 올바르지 않습니다."),
+    NOT_ENROLLED(HttpStatus.FORBIDDEN, "재학생만 로그인할 수 있습니다."),
+    ACCOUNT_INACTIVE(HttpStatus.FORBIDDEN, "비활성화된 계정입니다."),
     OAUTH_STATE_INVALID(HttpStatus.BAD_REQUEST, "로그인 요청을 확인하지 못했습니다. 다시 시도해 주세요."),
     OAUTH_EXCHANGE_FAILED(HttpStatus.BAD_REQUEST, "DataGSM 인증을 확인하지 못했습니다."),
     CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "확인 값이 대상과 다릅니다."),

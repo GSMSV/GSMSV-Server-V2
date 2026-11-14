@@ -57,7 +57,13 @@ class SecurityConfig : WebMvcConfigurer {
 
     companion object {
         /** 인증 없이 여는 경로. 개발용 토큰 API는 [com.gsmsv.api.global.security.dev.DevSecurityConfig]가 따로 연다 */
-        val PUBLIC_PATHS = arrayOf("/actuator/health", "/api/v2/auth/token-exchange")
+        val PUBLIC_PATHS =
+            arrayOf(
+                "/actuator/health",
+                "/api/v2/auth/datagsm/authorize",
+                "/api/v2/auth/datagsm/callback",
+                "/api/v2/auth/token-exchange",
+            )
     }
 }
 
