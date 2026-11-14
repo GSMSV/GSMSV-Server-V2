@@ -19,6 +19,11 @@ class AuthCookieWriter(
         headers.add(HttpHeaders.SET_COOKIE, cookie(REFRESH_COOKIE, refreshToken, REFRESH_PATH, RefreshTokenTtl).toString())
     }
 
+    fun clear(headers: HttpHeaders) {
+        headers.add(HttpHeaders.SET_COOKIE, cookie(ACCESS_COOKIE, "", "/", Duration.ZERO).toString())
+        headers.add(HttpHeaders.SET_COOKIE, cookie(REFRESH_COOKIE, "", REFRESH_PATH, Duration.ZERO).toString())
+    }
+
     private fun cookie(
         name: String,
         value: String,

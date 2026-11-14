@@ -15,6 +15,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import java.time.Duration
+import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -51,6 +52,33 @@ class TokenServiceTest {
 
         assertEquals(ErrorCode.UNAUTHENTICATED, assertFailsWith<BusinessException> { service.exchange("tmp_code") }.errorCode)
         verify(exactly = 1) { loginStateService.consumeCode("tmp_code") }
+        verify(exactly = 0) { tokenProvider.issue(any(), any()) }
+    }
+
+    @Test
+    fun `활성 사용자의 refresh token을 회전하고 새 access token을 발급한다`() {
+        val rotated = RefreshToken(user.id, "rotated", Instant.parse("2026-01-15T00:00:00Z"))
+        val access = AccessToken("new-access", Duration.ofMinutes(15))
+        every { refreshTokenService.rotate("old-refresh") } returns rotated
+        every { userService.findById(user.id) } returns user
+        every { tokenProvider.issue(user.id, user.role) } returns access
+
+        val result = service.refresh("old-refresh")
+
+        assertEquals(user, result.user)
+        assertEquals(rotated, result.refreshToken)
+        assertEquals(access, result.accessToken)
+        verify(exactly = 1) { refreshTokenService.rotate("old-refresh") }
+    }
+
+    @Test
+    fun `탈퇴한 계정은 refresh를 거절한다`() {
+        val withdrawn = User(user.id, "dgs-1", "user@example.test", "사용자", deletedAt = Instant.parse("2026-01-01T00:00:00Z"))
+        every { refreshTokenService.rotate("old-refresh") } returns
+            RefreshToken(user.id, "rotated", Instant.parse("2026-01-15T00:00:00Z"))
+        every { userService.findById(user.id) } returns withdrawn
+
+        assertEquals(ErrorCode.GONE, assertFailsWith<BusinessException> { service.refresh("old-refresh") }.errorCode)
         verify(exactly = 0) { tokenProvider.issue(any(), any()) }
     }
 }

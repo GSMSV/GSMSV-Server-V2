@@ -2,6 +2,8 @@ package com.gsmsv.api.auth.service
 
 import com.gsmsv.api.auth.domain.RefreshToken
 import com.gsmsv.api.auth.repository.RefreshTokenRepository
+import com.gsmsv.api.global.exception.BusinessException
+import com.gsmsv.api.global.exception.ErrorCode
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
@@ -23,6 +25,22 @@ class RefreshTokenService(
         val expiresAt = now.plus(TTL)
         repository.save(LoginStateService.sha256(value), userId, now, expiresAt)
         return RefreshToken(userId, value, expiresAt)
+    }
+
+    @Transactional
+    fun rotate(value: String): RefreshToken {
+        val tokenHash = LoginStateService.sha256(value)
+        val stored = repository.findByHashForUpdate(tokenHash) ?: throw BusinessException(ErrorCode.UNAUTHENTICATED)
+        if (!stored.expiresAt.isAfter(clock.instant())) {
+            throw BusinessException(ErrorCode.UNAUTHENTICATED)
+        }
+        if (repository.delete(tokenHash) != 1) throw BusinessException(ErrorCode.UNAUTHENTICATED)
+        return issue(stored.userId)
+    }
+
+    @Transactional
+    fun revoke(value: String?) {
+        if (!value.isNullOrBlank()) repository.delete(LoginStateService.sha256(value))
     }
 
     private fun randomValue(): String {

@@ -3,12 +3,16 @@ package com.gsmsv.api.auth.controller
 import com.gsmsv.api.auth.service.LoginService
 import com.gsmsv.api.auth.service.TokenService
 import com.gsmsv.api.global.authorization.Public
+import com.gsmsv.api.global.exception.BusinessException
+import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.global.security.AuthCookieWriter
+import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -66,10 +70,47 @@ class AuthController(
             .headers(headers)
             .body(
                 TokenExchangeResponse(
-                    LoginUserResponse(tokens.user.id, tokens.user.name, tokens.user.role.name.lowercase()),
+                    LoginUserResponse(
+                        tokens.user.id,
+                        tokens.user.name,
+                        tokens.user.role.name
+                            .lowercase(),
+                    ),
                     tokens.redirect,
                 ),
             )
+    }
+
+    @Public
+    @PostMapping("/refresh")
+    fun refresh(
+        @CookieValue(name = AuthCookieWriter.REFRESH_COOKIE, required = false) refreshToken: String?,
+        response: HttpServletResponse,
+    ): ResponseEntity<Void> {
+        try {
+            val tokens = tokenService.refresh(refreshToken ?: throw BusinessException(ErrorCode.UNAUTHENTICATED))
+            val headers = HttpHeaders()
+            cookieWriter.write(headers, tokens.accessToken.value, tokens.accessToken.expiresIn, tokens.refreshToken.value)
+            return ResponseEntity.noContent().headers(headers).build()
+        } catch (exception: BusinessException) {
+            if (exception.errorCode.status.is4xxClientError) {
+                val headers = HttpHeaders()
+                cookieWriter.clear(headers)
+                headers[HttpHeaders.SET_COOKIE]?.forEach { response.addHeader(HttpHeaders.SET_COOKIE, it) }
+            }
+            throw exception
+        }
+    }
+
+    @Public
+    @PostMapping("/logout")
+    fun logout(
+        @CookieValue(name = AuthCookieWriter.REFRESH_COOKIE, required = false) refreshToken: String?,
+    ): ResponseEntity<Void> {
+        tokenService.logout(refreshToken)
+        val headers = HttpHeaders()
+        cookieWriter.clear(headers)
+        return ResponseEntity.noContent().headers(headers).build()
     }
 
     private fun redirectTo(location: String): ResponseEntity<Void> =

@@ -25,5 +25,22 @@ class RefreshTokenRepository(
         )
     }
 
+    fun findByHashForUpdate(tokenHash: String): StoredRefreshToken? =
+        jdbcTemplate
+            .query(
+                "SELECT user_id, expires_at FROM auth_refresh_tokens WHERE token_hash = ? FOR UPDATE",
+                { rs, _ ->
+                    StoredRefreshToken(rs.getString("user_id"), rs.getObject("expires_at", OffsetDateTime::class.java).toInstant())
+                },
+                tokenHash,
+            ).firstOrNull()
+
+    fun delete(tokenHash: String): Int = jdbcTemplate.update("DELETE FROM auth_refresh_tokens WHERE token_hash = ?", tokenHash)
+
     private fun utc(instant: Instant): OffsetDateTime = OffsetDateTime.ofInstant(instant, ZoneOffset.UTC)
 }
+
+data class StoredRefreshToken(
+    val userId: String,
+    val expiresAt: Instant,
+)
