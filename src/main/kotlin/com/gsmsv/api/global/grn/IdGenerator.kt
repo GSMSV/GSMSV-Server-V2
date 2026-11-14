@@ -26,6 +26,9 @@ object IdGenerator {
 
     fun invitationId(): String = generate("inv", IdPattern.LONG_LENGTH)
 
+    /** 작업(operation) id. 서비스 자원처럼 12자다 (`constants/resource-id.md`). 예: `op-4p8w2k9m1xza` */
+    fun operationId(): String = generate("op", IdPattern.LONG_LENGTH)
+
     /** 알림 id. 하위 자원처럼 8자다 (`openapi/monitoring.yaml`). 예: `ntf-4k8m2q9t` */
     fun notificationId(): String = generate(IdPattern.NOTIFICATION_PREFIX, IdPattern.SHORT_LENGTH)
 
