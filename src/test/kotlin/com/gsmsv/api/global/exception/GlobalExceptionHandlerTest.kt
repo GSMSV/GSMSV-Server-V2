@@ -7,6 +7,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
@@ -72,6 +73,19 @@ class GlobalExceptionHandlerTest {
             jsonPath("$.details.required_role") { value("LEADER") }
             jsonPath("$.message") { value("팀장만 할 수 있습니다.") }
         }
+    }
+
+    @Test
+    fun `BusinessException의 응답 헤더를 오류 응답에 보존한다`() {
+        val result =
+            mockMvc
+                .get("/test/headers")
+                .andExpect {
+                    status { isUnauthorized() }
+                    jsonPath("$.code") { value("UNAUTHENTICATED") }
+                }.andReturn()
+
+        assert(result.response.getHeaders(HttpHeaders.SET_COOKIE).any { it.startsWith("refresh_token=; Max-Age=0") })
     }
 
     @Test
@@ -196,6 +210,13 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/test/details")
         fun details(): String = throw BusinessException(ErrorCode.ACCESS_DENIED, mapOf("required_role" to "LEADER"), "팀장만 할 수 있습니다.")
+
+        @GetMapping("/test/headers")
+        fun headers(): String =
+            throw BusinessException(
+                ErrorCode.UNAUTHENTICATED,
+                responseHeaders = HttpHeaders().apply { add(HttpHeaders.SET_COOKIE, "refresh_token=; Max-Age=0") },
+            )
 
         @GetMapping("/test/boom")
         fun boom(): String = throw IllegalStateException("secret-detail")

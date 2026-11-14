@@ -6,7 +6,6 @@ import com.gsmsv.api.global.authorization.Public
 import com.gsmsv.api.global.exception.BusinessException
 import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.global.security.AuthCookieWriter
-import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpHeaders
@@ -85,7 +84,6 @@ class AuthController(
     @PostMapping("/refresh")
     fun refresh(
         @CookieValue(name = AuthCookieWriter.REFRESH_COOKIE, required = false) refreshToken: String?,
-        response: HttpServletResponse,
     ): ResponseEntity<Void> {
         try {
             val tokens = tokenService.refresh(refreshToken ?: throw BusinessException(ErrorCode.UNAUTHENTICATED))
@@ -96,7 +94,7 @@ class AuthController(
             if (exception.errorCode.status.is4xxClientError) {
                 val headers = HttpHeaders()
                 cookieWriter.clear(headers)
-                headers[HttpHeaders.SET_COOKIE]?.forEach { response.addHeader(HttpHeaders.SET_COOKIE, it) }
+                throw BusinessException(exception.errorCode, exception.details, exception.message, headers)
             }
             throw exception
         }
