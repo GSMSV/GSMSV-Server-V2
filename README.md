@@ -19,6 +19,9 @@ JDK 21과 Docker가 필요하다. DB(PostgreSQL)는 `compose.yaml`로 앱이 뜰
 
 ```bash
 export JWT_SECRET=$(openssl rand -base64 32)   # 토큰 서명 키. 실제 값을 저장소에 적지 않는다
+export DATAGSM_CLIENT_ID=...                   # DataGSM OAuth 클라이언트 등록 정보. 비어 있으면 기동에 실패한다
+export DATAGSM_CLIENT_SECRET=...
+export DATAGSM_REDIRECT_URI=...                # DataGSM에 등록한 콜백 주소와 같아야 한다
 read -rp '학교 이메일 도메인: ' SCHOOL_EMAIL_DOMAIN; export SCHOOL_EMAIL_DOMAIN
 ./gradlew bootRun                              # 프로필을 주지 않으면 local
 ```
