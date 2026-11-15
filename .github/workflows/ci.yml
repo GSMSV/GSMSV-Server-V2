@@ -46,6 +46,27 @@ jobs:
             build/test-results/
           retention-days: 7
 
+  # Flyway가 실제로 뜨는 테스트는 integration 태그로 빠져 있어서, 번호 중복이 배포 때까지 드러나지 않는다.
+  # 파일 이름과 git diff만 보는 검사라 Docker 없이 PR마다 돌릴 수 있다
+  migrations:
+    name: 마이그레이션 검사
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # base와의 merge-base를 찾아야 바뀐 마이그레이션만 고를 수 있다
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 마이그레이션 규칙 확인
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch --no-tags --force origin "$BASE_REF:refs/remotes/origin/$BASE_REF"
+          node .github/scripts/check-migrations.mjs
+
   # develop 대상 PR은 단위 테스트만 돌리고, main 대상 PR(develop → main)과 main push에서만 통합 테스트를 돈다
   integration:
     name: 통합 테스트

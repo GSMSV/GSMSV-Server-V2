@@ -35,6 +35,9 @@ enum class Action(
     VIEW_ACCESS_INFO(Grant.ALL_MEMBERS),
     EXTEND(Grant.ALL_MEMBERS),
 
+    /** 백업 파일 내려받기. 계약 `permissions`의 `read_backup`과 이름을 맞췄다 */
+    READ_BACKUP(Grant.ALL_MEMBERS),
+
     /** 팀 탈퇴. 대상은 언제나 요청자 본인이다 */
     LEAVE_TEAM(Grant.ALL_MEMBERS),
 
@@ -50,6 +53,9 @@ enum class Action(
     FIREWALL(Grant.LEADER_OR_DEVOPS),
     DOMAIN(Grant.LEADER_OR_DEVOPS),
 
+    /** 데이터베이스 계정 비밀번호 교체 (24번 DBaaS 2장 "설정 변경(비밀번호 교체 포함)") */
+    ROTATE_PASSWORD(Grant.LEADER_OR_DEVOPS),
+
     INVITE_MEMBER(Grant.LEADER_ONLY),
     RESUBMIT_TEAM(Grant.LEADER_ONLY),
     REMOVE_MEMBER(Grant.LEADER_ONLY),
@@ -61,6 +67,9 @@ enum class Action(
 
     APPROVE_TEAM(Grant.ADMIN_ONLY),
     APPROVE_DISBAND_TEAM(Grant.ADMIN_ONLY),
+
+    /** 관리자 인프라 현황 조회 (11.13~11.15). 특정 자원이 아니라 플랫폼 전체가 대상이다 */
+    VIEW_INFRA(Grant.ADMIN_ONLY),
     ;
 
     /**

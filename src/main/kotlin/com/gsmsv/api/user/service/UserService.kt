@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional
 class UserService(
     private val userRepository: UserRepository,
 ) {
+    /** 탈퇴하지 않은 계정을 DataGSM id로 찾는다. 로그인 때 역할과 상태를 확인한다. */
+    @Transactional(readOnly = true)
+    fun findByDataGsmId(dataGsmId: String): User? = userRepository.findByDataGsmIdAndDeletedAtIsNull(dataGsmId)
+
     @Transactional(readOnly = true)
     fun findById(id: String): User? = userRepository.findById(id).orElse(null)
 

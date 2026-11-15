@@ -10,7 +10,7 @@ GSMSV v2의 API 서버(Kotlin, Spring Boot)다. 인증·권한·오류 형식·G
 |---|---|
 | [GSMSV-Server-V2](https://github.com/GSMSV/GSMSV-Server-V2) | API 서버 (Kotlin) |
 | [GSMSV-Client-V2](https://github.com/GSMSV/GSMSV-Client-V2) | 웹 콘솔 (React) |
-| [GSMSV-Infra-V2](https://github.com/GSMSV/GSMSV-Infra-V2) | Proxmox·k3s를 다루는 실행 엔진 (Go) |
+| [GSMSV-Infra-V2](https://github.com/GSMSV/GSMSV-Infra-V2) | Proxmox·Kubernetes를 다루는 실행 엔진 (Go) |
 | [GSMSV-Contracts-V2](https://github.com/GSMSV/GSMSV-Contracts-V2) | 저장소끼리 함께 쓰는 약속 (API 명세, 자원 이름 규칙) |
 
 ## 로컬 실행
@@ -19,6 +19,10 @@ JDK 21과 Docker가 필요하다. DB(PostgreSQL)는 `compose.yaml`로 앱이 뜰
 
 ```bash
 export JWT_SECRET=$(openssl rand -base64 32)   # 토큰 서명 키. 실제 값을 저장소에 적지 않는다
+export AUTH_FRONTEND_URL=...                   # 로그인 뒤 돌아갈 프론트 주소
+export DATAGSM_CLIENT_ID=...                   # DataGSM OAuth 클라이언트 등록 정보. 비어 있으면 기동에 실패한다
+export DATAGSM_CLIENT_SECRET=...
+export DATAGSM_REDIRECT_URI=...                # DataGSM에 등록한 콜백 주소와 같아야 한다
 read -rp '학교 이메일 도메인: ' SCHOOL_EMAIL_DOMAIN; export SCHOOL_EMAIL_DOMAIN
 ./gradlew bootRun                              # 프로필을 주지 않으면 local
 ```
