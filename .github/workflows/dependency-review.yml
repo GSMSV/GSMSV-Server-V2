@@ -1,0 +1,26 @@
+name: 의존성 검토
+
+# PR이 새로 들여오는 의존성에 알려진 취약점(CVE)이 있으면 병합 전에 막는다
+on:
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    name: 의존성 취약점 검사
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: 의존성 검토
+        uses: actions/dependency-review-action@v4
+        with:
+          # high 이상 취약점이 새로 들어오면 실패시킨다
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
