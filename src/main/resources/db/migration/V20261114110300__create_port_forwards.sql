@@ -6,7 +6,7 @@ CREATE TABLE port_forwards
     external_port  INTEGER     NOT NULL CHECK (external_port BETWEEN 1 AND 65535),
     internal_port  INTEGER     NOT NULL CHECK (internal_port BETWEEN 1 AND 65535),
     protocol       VARCHAR(3)  NOT NULL CHECK (protocol IN ('TCP', 'UDP')),
-    allowed_source VARCHAR(43),
+    allowed_source VARCHAR(49),
     description    TEXT,
     created_at     TIMESTAMPTZ NOT NULL
 );

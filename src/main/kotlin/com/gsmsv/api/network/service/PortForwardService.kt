@@ -11,6 +11,7 @@ import com.gsmsv.api.network.config.PortForwardProperties
 import com.gsmsv.api.network.domain.PortForward
 import com.gsmsv.api.network.domain.PortForwardKind
 import com.gsmsv.api.network.domain.PortForwardProtocol
+import com.gsmsv.api.network.domain.SyncStatus
 import com.gsmsv.api.network.dto.CreatePortForwardRequest
 import com.gsmsv.api.network.dto.CreatePortForwardResponse
 import com.gsmsv.api.network.dto.PortForwardLimitsResponse
@@ -19,6 +20,7 @@ import com.gsmsv.api.network.dto.PortForwardResponse
 import com.gsmsv.api.network.repository.PortForwardLock
 import com.gsmsv.api.network.repository.PortForwardRepository
 import com.gsmsv.api.vm.domain.Vm
+import com.gsmsv.api.vm.domain.VmStatus
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -63,6 +65,8 @@ class PortForwardService(
         request: CreatePortForwardRequest,
     ): CreatePortForwardResponse {
         val internalIp = vm.internalIp ?: throw BusinessException(ErrorCode.VM_NO_INTERNAL_IP)
+        // 삭제 중·정지·실패 VM은 내부 IP가 남아 있어도 규칙을 열지 않는다 (회수될 IP 앞으로 포트가 열리는 것을 막는다)
+        if (vm.status != VmStatus.ACTIVE) throw BusinessException(ErrorCode.CONFLICT)
         lock.lock(vm.id)
         val used = repository.countByVmIdAndKind(vm.id, PortForwardKind.CUSTOM).toInt()
         if (used >= properties.customLimit) {
@@ -80,7 +84,9 @@ class PortForwardService(
             )
         try {
             repository.saveAndFlush(portForward)
-        } catch (_: DataIntegrityViolationException) {
+        } catch (e: DataIntegrityViolationException) {
+            // 외부 포트 유니크 충돌만 다시 시도할 수 있는 409다. FK·CHECK 위반은 원인을 가리지 않도록 그대로 던진다
+            if (!e.isExternalPortConflict()) throw e
             throw BusinessException(ErrorCode.CONFLICT)
         }
         syncPorts(vm.id, internalIp)
@@ -89,7 +95,8 @@ class PortForwardService(
             externalPort = portForward.externalPort,
             internalPort = portForward.internalPort,
             protocol = portForward.protocol.name.lowercase(),
-            syncStatus = SYNC_STATUS_SYNCED,
+            // 동기 처리라 성공하면 언제나 반영된 상태다
+            syncStatus = SyncStatus.SYNCED.wire,
         )
     }
 
@@ -117,14 +124,12 @@ class PortForwardService(
         )
     }
 
-    // 커스텀 범위에서 무작위로 골라 비었는지 본다. 이미 쓰는 번호를 모두 읽지 않아 범위가 넓어도 조회가 짧다
+    // 커스텀 범위에서 무작위 후보를 한 번에 뽑아, 쓰는 번호만 한 번에 조회해 빼고 고른다. 쓰는 번호를 모두 읽지 않아 범위가 넓어도 조회가 짧다
     private fun pickFreeExternalPort(): Int {
         val range = properties.customPortRange
-        repeat(MAX_PICK_ATTEMPTS) {
-            val candidate = random.nextInt(range.first, range.last + 1)
-            if (!repository.existsByExternalPort(candidate)) return candidate
-        }
-        throw BusinessException(ErrorCode.NO_FREE_PORT)
+        val candidates = List(MAX_PICK_ATTEMPTS) { random.nextInt(range.first, range.last + 1) }.distinct()
+        val used = repository.findUsedExternalPorts(candidates).toSet()
+        return candidates.firstOrNull { it !in used } ?: throw BusinessException(ErrorCode.NO_FREE_PORT)
     }
 
     private fun syncPorts(
@@ -148,6 +153,9 @@ class PortForwardService(
         networkInfraClient.syncVmPorts(vmId, internalIp, rules)
     }
 
+    private fun DataIntegrityViolationException.isExternalPortConflict(): Boolean =
+        generateSequence<Throwable>(this) { it.cause }.any { it.message?.contains(EXTERNAL_PORT_UNIQUE_INDEX) == true }
+
     private fun toResponse(portForward: PortForward) =
         PortForwardResponse(
             id = portForward.id,
@@ -162,7 +170,7 @@ class PortForwardService(
     private companion object {
         const val MAX_PICK_ATTEMPTS = 100
 
-        // 동기 처리라 성공하면 언제나 반영된 상태다. 값 이름은 계약 SyncStatus(pending·synced·failed)를 따른다
-        const val SYNC_STATUS_SYNCED = "synced"
+        // V20261114110300__create_port_forwards.sql의 유니크 인덱스 이름
+        const val EXTERNAL_PORT_UNIQUE_INDEX = "uq_port_forwards_external_port"
     }
 }

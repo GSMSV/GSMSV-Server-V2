@@ -59,7 +59,7 @@ class PortForwardServiceTest {
         val existing = PortForward.createDefault("port-5q8w3n7z", vm.id, PortForwardKind.SSH, 20022, 22)
         val saved = slot<PortForward>()
         every { repository.countByVmIdAndKind(vm.id, PortForwardKind.CUSTOM) } returns 0
-        every { repository.existsByExternalPort(any()) } returns false
+        every { repository.findUsedExternalPorts(any()) } returns emptyList()
         every { repository.saveAndFlush(capture(saved)) } answers { saved.captured }
         every { repository.findAllByVmIdOrderByCreatedAtAscIdAsc(vm.id) } answers { listOf(existing, saved.captured) }
 
@@ -91,14 +91,16 @@ class PortForwardServiceTest {
     fun `이미 쓰는 외부 포트는 건너뛰고 빈 번호를 고른다`() {
         val vm = activeVm()
         val saved = slot<PortForward>()
+        val candidates = slot<Collection<Int>>()
         every { repository.countByVmIdAndKind(vm.id, PortForwardKind.CUSTOM) } returns 0
-        every { repository.existsByExternalPort(any()) } returnsMany listOf(true, true, false)
+        every { repository.findUsedExternalPorts(capture(candidates)) } answers { candidates.captured.take(2) }
         every { repository.saveAndFlush(capture(saved)) } answers { saved.captured }
         every { repository.findAllByVmIdOrderByCreatedAtAscIdAsc(vm.id) } answers { listOf(saved.captured) }
 
         service.create(vm, request())
 
-        verify(exactly = 3) { repository.existsByExternalPort(any()) }
+        assertEquals(candidates.captured.toList()[2], saved.captured.externalPort)
+        verify(exactly = 1) { repository.findUsedExternalPorts(any()) }
     }
 
     @Test
@@ -115,15 +117,15 @@ class PortForwardServiceTest {
     }
 
     @Test
-    fun `100번 골라도 빈 외부 포트가 없으면 503 NO_FREE_PORT다`() {
+    fun `후보가 모두 쓰는 번호이면 503 NO_FREE_PORT다`() {
         val vm = activeVm()
         every { repository.countByVmIdAndKind(vm.id, PortForwardKind.CUSTOM) } returns 0
-        every { repository.existsByExternalPort(any()) } returns true
+        every { repository.findUsedExternalPorts(any()) } answers { firstArg<Collection<Int>>().toList() }
 
         val exception = assertThrows<BusinessException> { service.create(vm, request()) }
 
         assertEquals(ErrorCode.NO_FREE_PORT, exception.errorCode)
-        verify(exactly = 100) { repository.existsByExternalPort(any()) }
+        verify(exactly = 1) { repository.findUsedExternalPorts(any()) }
         verify(exactly = 0) { repository.saveAndFlush(any()) }
     }
 
@@ -131,8 +133,9 @@ class PortForwardServiceTest {
     fun `다른 요청이 같은 외부 포트를 먼저 저장했으면 409 CONFLICT이고 Go에 보내지 않는다`() {
         val vm = activeVm()
         every { repository.countByVmIdAndKind(vm.id, PortForwardKind.CUSTOM) } returns 0
-        every { repository.existsByExternalPort(any()) } returns false
-        every { repository.saveAndFlush(any()) } throws DataIntegrityViolationException("duplicate")
+        every { repository.findUsedExternalPorts(any()) } returns emptyList()
+        every { repository.saveAndFlush(any()) } throws
+            DataIntegrityViolationException("duplicate key value violates unique constraint \"uq_port_forwards_external_port\"")
 
         val exception = assertThrows<BusinessException> { service.create(vm, request()) }
 
@@ -141,11 +144,34 @@ class PortForwardServiceTest {
     }
 
     @Test
+    fun `외부 포트 충돌이 아닌 제약 위반은 409로 바꾸지 않고 그대로 던진다`() {
+        val vm = activeVm()
+        every { repository.countByVmIdAndKind(vm.id, PortForwardKind.CUSTOM) } returns 0
+        every { repository.findUsedExternalPorts(any()) } returns emptyList()
+        every { repository.saveAndFlush(any()) } throws
+            DataIntegrityViolationException("violates foreign key constraint \"fk_port_forwards_vm\"")
+
+        assertThrows<DataIntegrityViolationException> { service.create(vm, request()) }
+        assertTrue(infra.portSyncCalls.isEmpty())
+    }
+
+    @Test
+    fun `ACTIVE가 아닌 VM에는 추가할 수 없어 409 CONFLICT다`() {
+        val vm = activeVm().also { it.suspend() }
+
+        val exception = assertThrows<BusinessException> { service.create(vm, request()) }
+
+        assertEquals(ErrorCode.CONFLICT, exception.errorCode)
+        verify(exactly = 0) { repository.saveAndFlush(any()) }
+        assertTrue(infra.portSyncCalls.isEmpty())
+    }
+
+    @Test
     fun `Go 반영이 실패하면 예외를 그대로 던져 트랜잭션을 되돌린다`() {
         val vm = activeVm()
         val saved = slot<PortForward>()
         every { repository.countByVmIdAndKind(vm.id, PortForwardKind.CUSTOM) } returns 0
-        every { repository.existsByExternalPort(any()) } returns false
+        every { repository.findUsedExternalPorts(any()) } returns emptyList()
         every { repository.saveAndFlush(capture(saved)) } answers { saved.captured }
         every { repository.findAllByVmIdOrderByCreatedAtAscIdAsc(vm.id) } answers { listOf(saved.captured) }
         infra.failWith(BusinessException(ErrorCode.GATEWAY_SYNC_FAILED))

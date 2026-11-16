@@ -35,7 +35,7 @@ class PortForward(
     @Column(nullable = false, updatable = false, length = 3)
     val protocol: PortForwardProtocol,
     /** IP 또는 CIDR. 없으면 모두 허용한다 */
-    @Column(name = "allowed_source", updatable = false, length = 43)
+    @Column(name = "allowed_source", updatable = false, length = 49)
     val allowedSource: String?,
     @Column(updatable = false, columnDefinition = "text")
     val description: String?,

@@ -7,7 +7,20 @@ import kotlin.test.assertTrue
 
 class IpOrCidrFormatTest {
     @ParameterizedTest
-    @ValueSource(strings = ["203.0.113.5", "203.0.113.0/24", "0.0.0.0/0", "198.51.100.7/32", "2001:db8::1", "2001:db8::/32", "::/0"])
+    @ValueSource(
+        strings = [
+            "203.0.113.5",
+            "203.0.113.0/24",
+            "0.0.0.0/0",
+            "198.51.100.7/32",
+            "2001:db8::1",
+            "2001:db8::/32",
+            "::/0",
+            "::ffff:203.0.113.5",
+            "::ffff:203.0.113.0/120",
+            "0000:0000:0000:0000:0000:ffff:255.255.255.255/128",
+        ],
+    )
     fun `IP 주소와 CIDR은 맞는 형식이다`(value: String) {
         assertTrue(IpOrCidrFormat.isValid(value))
     }
@@ -29,6 +42,8 @@ class IpOrCidrFormatTest {
             "2001:zz8::1",
             "fe80::1%eth0",
             " 203.0.113.5",
+            ".:",
+            ".:1",
         ],
     )
     fun `IP·CIDR이 아니면 틀린 형식이다`(value: String) {
