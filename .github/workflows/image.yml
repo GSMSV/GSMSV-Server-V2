@@ -4,13 +4,13 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: [develop]
+    branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: image-develop
+  group: image-main
   cancel-in-progress: false
 
 jobs:
