@@ -4,13 +4,13 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: [develop]
+    branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: image-develop
+  group: image-main
   cancel-in-progress: false
 
 jobs:
@@ -19,10 +19,11 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # 이미지 업로드에만 packages 쓰기 권한을 준다
+    # 이미지 업로드에 packages 쓰기, Trivy 스캔 결과 업로드에 security-events 쓰기 권한을 준다
     permissions:
       contents: read
       packages: write
+      security-events: write
     steps:
       # CI가 검사한 커밋을 그대로 빌드한다
       - uses: actions/checkout@v4
@@ -39,6 +40,7 @@ jobs:
 
       # 태그는 커밋 SHA다. 어떤 커밋이 배포됐는지 알 수 있고 이전 SHA로 되돌릴 수 있다
       - name: 이미지 빌드·업로드
+        id: build
         env:
           REPOSITORY: ${{ github.repository }}
           COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -46,3 +48,36 @@ jobs:
           IMAGE="ghcr.io/${REPOSITORY,,}:${COMMIT_SHA}"
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      # 이미지의 OS·시스템 패키지 CVE를 스캔한다. 공식 Trivy 액션을 SHA로 고정해 쓴다 (허용 목록 등록됨)
+      # 기록용이라 스캔·업로드가 실패해도 이미지 workflow는 성공으로 끝내 배포를 막지 않는다
+      - name: 이미지 취약점 스캔
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.build.outputs.image }}
+          format: sarif
+          output: trivy.sarif
+          exit-code: '0'
+          ignore-unfixed: true
+
+      # 결과를 Security 탭(code scanning)에 올린다. github/* 액션이라 정책상 허용된다
+      - name: 스캔 결과 업로드
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-image
+
+  # 이미지가 올라가면 같은 커밋 SHA로 배포를 호출한다. 브랜치 조건은 위 on.workflow_run.branches에서만 본다
+  deploy:
+    name: 운영 서버 배포
+    needs: image
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/deploy.yml
+    with:
+      tag: ${{ github.event.workflow_run.head_sha }}
+    secrets: inherit

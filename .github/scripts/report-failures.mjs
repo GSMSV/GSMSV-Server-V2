@@ -25,7 +25,8 @@ function escapeProperty(s) {
 }
 
 function escapeCell(s) {
-  return s.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
+  // 백슬래시를 먼저 이스케이프해야 뒤의 `\|`·내용의 `\`가 표 구분자를 먹지 않는다
+  return s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
 }
 
 function unescapeXml(s) {
