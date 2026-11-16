@@ -1,0 +1,33 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "timezone": "Asia/Seoul",
+  "schedule": ["before 6am on monday"],
+  "labels": ["chore"],
+  "prConcurrentLimit": 5,
+  "commitMessagePrefix": "build(deps):",
+  "commitMessageAction": "업데이트",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "{{currentVersion}}에서 {{newVersion}}로",
+  "packageRules": [
+    {
+      "description": "자잘한 minor·patch 업데이트는 한 PR로 묶는다",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "minor·patch 업데이트"
+    },
+    {
+      "description": "GitHub Actions 업데이트는 따로 묶는다",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions 업데이트",
+      "commitMessagePrefix": "ci(deps):"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["bug"],
+    "commitMessagePrefix": "fix(deps):",
+    "commitMessageAction": "보안 업데이트"
+  }
+}
