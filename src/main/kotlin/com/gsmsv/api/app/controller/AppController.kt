@@ -1,17 +1,26 @@
 package com.gsmsv.api.app.controller
 
+import com.gsmsv.api.app.dto.AppSummaryResponse
 import com.gsmsv.api.app.dto.CreateAppRequest
 import com.gsmsv.api.app.dto.CreateAppResponse
+import com.gsmsv.api.app.repository.AppResourceReader
 import com.gsmsv.api.app.service.AppCommandService
+import com.gsmsv.api.app.service.AppQueryService
 import com.gsmsv.api.global.authorization.Action
 import com.gsmsv.api.global.authorization.Authenticated
 import com.gsmsv.api.global.authorization.RequirePermission
+import com.gsmsv.api.global.authorization.ServiceResourceLoader
 import com.gsmsv.api.global.authorization.TeamLoader
+import com.gsmsv.api.global.grn.Grn
+import com.gsmsv.api.global.response.CursorPage
+import com.gsmsv.api.global.response.CursorPageRequest
 import com.gsmsv.api.global.security.AuthenticatedUser
 import com.gsmsv.api.global.security.CurrentUser
 import com.gsmsv.api.team.service.TeamService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -23,7 +32,39 @@ class AppController(
     private val appCommandService: AppCommandService,
     private val teamLoader: TeamLoader,
     private val teamService: TeamService,
+    private val appQueryService: AppQueryService,
+    private val serviceResourceLoader: ServiceResourceLoader,
+    private val appResourceReader: AppResourceReader,
 ) {
+    @Authenticated
+    @GetMapping("/api/v2/apps")
+    fun listPersonalApps(
+        @CurrentUser user: AuthenticatedUser,
+        @Valid @ModelAttribute page: CursorPageRequest,
+    ): CursorPage<AppSummaryResponse> = appQueryService.listPersonal(user.toActor(), page)
+
+    @RequirePermission(Action.VIEW)
+    @GetMapping("/api/v2/teams/{team_id}/apps")
+    fun listTeamApps(
+        @CurrentUser user: AuthenticatedUser,
+        @PathVariable("team_id") teamId: String,
+        @Valid @ModelAttribute page: CursorPageRequest,
+    ): CursorPage<AppSummaryResponse> {
+        val team = teamLoader.load(user.toActor(), teamId, Action.VIEW, teamService)
+        return appQueryService.listTeam(user.toActor(), team, page)
+    }
+
+    @RequirePermission(Action.VIEW)
+    @GetMapping("/api/v2/apps/{app_grn}")
+    fun getApp(
+        @CurrentUser user: AuthenticatedUser,
+        @PathVariable("app_grn") grn: Grn,
+    ): CreateAppResponse {
+        val actor = user.toActor()
+        val app = serviceResourceLoader.load(actor, grn.value, Action.VIEW, appResourceReader)
+        return appQueryService.get(actor, app)
+    }
+
     @Authenticated
     @PostMapping("/api/v2/apps")
     @ResponseStatus(HttpStatus.CREATED)
