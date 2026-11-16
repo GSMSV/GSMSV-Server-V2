@@ -1,0 +1,71 @@
+name: 이미지
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-main
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: 이미지 빌드·GHCR 업로드
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # 이미지 업로드에 packages 쓰기, Trivy 스캔 결과 업로드에 security-events 쓰기 권한을 준다
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      # CI가 검사한 커밋을 그대로 빌드한다
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      # 공식 액션(actions/*)만 허용돼 있어 docker/* 액션 대신 docker CLI를 쓴다
+      - name: GHCR 로그인
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+      # 태그는 커밋 SHA다. 어떤 커밋이 배포됐는지 알 수 있고 이전 SHA로 되돌릴 수 있다
+      - name: 이미지 빌드·업로드
+        env:
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          IMAGE="ghcr.io/${REPOSITORY,,}:${COMMIT_SHA}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      # 서드파티 액션(aquasecurity/*)은 막혀 있어 Trivy를 CLI로 설치해 쓴다
+      - name: Trivy 설치
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin v0.58.1
+
+      # 이미지의 OS·시스템 패키지 CVE를 스캔한다. 지금은 기록만 하고(exit 0) 차단하지 않는다
+      - name: 이미지 취약점 스캔
+        env:
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          IMAGE="ghcr.io/${REPOSITORY,,}:${COMMIT_SHA}"
+          trivy image --format sarif --output trivy.sarif --exit-code 0 --ignore-unfixed "$IMAGE"
+
+      # 결과를 Security 탭(code scanning)에 올린다. github/* 액션이라 정책상 허용된다
+      - name: 스캔 결과 업로드
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-image

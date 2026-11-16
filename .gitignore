@@ -1,0 +1,59 @@
+# 기획 문서는 Notion에만 둔다 (팀 규칙). AI 코딩 도구용 규칙은 AGENTS.md에 둔다
+/docs/
+
+# 비밀값
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code 개인 설정
+.claude/settings.local.json
+
+### Gradle ###
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Kotlin ###
+.kotlin
+
+# 개인 로컬 설정
+application-local.*

@@ -1,0 +1,17 @@
+# 이미지에 필요 없거나 넣으면 안 되는 파일
+.git
+.github
+.gradle
+.idea
+.claude
+.agents
+.codex
+build
+out
+docs
+*.md
+.env
+.env.*
+compose.yaml
+Dockerfile
+.dockerignore

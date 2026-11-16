@@ -1,0 +1,27 @@
+name: PR 제목
+
+on:
+  pull_request:
+    branches: [develop, main]
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: PR 제목 검사
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: PR 제목 형식 확인
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node .github/scripts/check-pr-title.mjs

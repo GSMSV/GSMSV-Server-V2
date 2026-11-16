@@ -1,0 +1,24 @@
+# Sandrone Code Review Bot 설정
+# 설명: https://github.com/tmp-it-play/sandrone-code-review-bot#저장소-설정
+language: ko
+tone: professional
+minSeverity: minor
+maxInlineComments: 25
+
+# 기본 제외 목록(빌드 산출물, lock, 이미지 등)에 추가한다
+exclude:
+  - "gradlew"
+  - "gradlew.bat"
+  - "gradle/wrapper/**"
+
+sandrone:
+  autoReview: true
+  autoReviewOnDraft: true
+  autoReviewOnPush: false
+  summaryPlacement: new-comment
+  # 기본값은 루트의 CONTRIBUTING.md만 읽으므로 .github/ 아래 문서를 직접 지정한다.
+  # 이 목록은 기본 목록에 더해지지 않고 대체한다
+  instructionFiles:
+    - "AGENTS.md"
+    - "CLAUDE.md"
+    - ".github/CONTRIBUTING.md"
