@@ -40,6 +40,7 @@ jobs:
 
       # 태그는 커밋 SHA다. 어떤 커밋이 배포됐는지 알 수 있고 이전 SHA로 되돌릴 수 있다
       - name: 이미지 빌드·업로드
+        id: build
         env:
           REPOSITORY: ${{ github.repository }}
           COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -47,24 +48,19 @@ jobs:
           IMAGE="ghcr.io/${REPOSITORY,,}:${COMMIT_SHA}"
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
-      # 서드파티 액션(aquasecurity/*)은 막혀 있어 Trivy를 CLI로 설치해 쓴다
-      # 스캔은 기록용이라 설치·스캔·업로드가 실패해도 이미지 workflow는 성공으로 끝내 배포를 막지 않는다
-      - name: Trivy 설치
-        continue-on-error: true
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.58.1/contrib/install.sh \
-            | sh -s -- -b /usr/local/bin v0.58.1
-
-      # 이미지의 OS·시스템 패키지 CVE를 스캔한다. 지금은 기록만 하고(exit 0) 차단하지 않는다
+      # 이미지의 OS·시스템 패키지 CVE를 스캔한다. 공식 Trivy 액션을 SHA로 고정해 쓴다 (허용 목록 등록됨)
+      # 기록용이라 스캔·업로드가 실패해도 이미지 workflow는 성공으로 끝내 배포를 막지 않는다
       - name: 이미지 취약점 스캔
         continue-on-error: true
-        env:
-          REPOSITORY: ${{ github.repository }}
-          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: |
-          IMAGE="ghcr.io/${REPOSITORY,,}:${COMMIT_SHA}"
-          trivy image --format sarif --output trivy.sarif --exit-code 0 --ignore-unfixed "$IMAGE"
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.build.outputs.image }}
+          format: sarif
+          output: trivy.sarif
+          exit-code: '0'
+          ignore-unfixed: true
 
       # 결과를 Security 탭(code scanning)에 올린다. github/* 액션이라 정책상 허용된다
       - name: 스캔 결과 업로드
