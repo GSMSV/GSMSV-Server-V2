@@ -69,3 +69,15 @@ jobs:
         with:
           sarif_file: trivy.sarif
           category: trivy-image
+
+  # 이미지가 올라가면 같은 커밋 SHA로 배포를 호출한다. 브랜치 조건은 위 on.workflow_run.branches에서만 본다
+  deploy:
+    name: 운영 서버 배포
+    needs: image
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/deploy.yml
+    with:
+      tag: ${{ github.event.workflow_run.head_sha }}
+    secrets: inherit
