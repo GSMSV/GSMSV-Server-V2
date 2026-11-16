@@ -80,9 +80,10 @@ class DatabaseCredentialService(
 
         val newPassword = DatabasePasswordGenerator.generate()
         database.changePassword(cipher().encrypt(newPassword))
-        databaseRepository.save(database)
+        // UPDATE를 먼저 내보내 저장이 실패하면(동시 변경 충돌 등) 서버 비밀번호는 바꾸지 않는다
+        databaseRepository.saveAndFlush(database)
         auditRecorder.record(actor, AuditEventType.DATABASE_PASSWORD_ROTATE, grnOf(database))
-        provisioner().rotatePassword(database.id, newPassword)
+        provisionerProvider.requireAvailable().rotatePassword(database.id, newPassword)
         return PasswordRotationResponse(
             password = newPassword,
             rotatedAt = Instant.now(clock),
@@ -106,8 +107,6 @@ class DatabaseCredentialService(
 
     private fun cipher(): DatabasePasswordCipher =
         checkNotNull(cipherProvider.ifAvailable) { "DB 비밀번호 암호화 키(gsmsv.database.encryption-key)가 설정되지 않았습니다." }
-
-    private fun provisioner(): SharedDatabaseProvisioner = checkNotNull(provisionerProvider.ifAvailable) { "공유 DB 서버 연결이 설정되지 않았습니다." }
 
     private companion object {
         // 정지된 DB도 계정은 남아 있으므로 바꿀 수 있다. 만드는 중·삭제 중·실패한 DB는 바꿀 계정이 확실하지 않다

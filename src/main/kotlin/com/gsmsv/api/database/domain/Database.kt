@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.time.Instant
 
 /**
@@ -42,6 +43,10 @@ class Database(
     initialExpiresAt: Instant,
     initialCreatedAt: Instant = Instant.now(),
 ) : OwnedResource {
+    init {
+        require(isValidName(initialName)) { "DB 이름은 앞뒤 공백이 없는 1~30자여야 합니다." }
+    }
+
     @Column(nullable = false)
     final var name: String = initialName
         private set
@@ -53,6 +58,12 @@ class Database(
 
     @Column(name = "write_locked", nullable = false)
     final var writeLocked: Boolean = false
+        private set
+
+    /** 낙관적 잠금. 같은 행을 동시에 바꾸면 늦게 커밋하는 쪽이 실패한다. 처음 저장할 때 DB가 채운다 */
+    @Version
+    @Column(nullable = false)
+    final var version: Long? = null
         private set
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -83,6 +94,7 @@ class Database(
             }
 
     fun rename(name: String) {
+        require(isValidName(name)) { "DB 이름은 앞뒤 공백이 없는 1~30자여야 합니다." }
         this.name = name
     }
 
@@ -154,6 +166,11 @@ class Database(
     companion object {
         /** 계정당 동시 연결 수 (24번 DBaaS 7장). 설정값으로 옮길 때까지 기본값으로 둔다 */
         const val DEFAULT_MAX_CONNECTIONS = 10
+
+        private val NAME_LENGTH = 1..30
+
+        /** 앞뒤 공백을 지운 뒤 1~30자(글자 기준)인지. 사용자 입력은 지운 값을 넘긴다 */
+        fun isValidName(name: String): Boolean = name == name.trim() && name.codePointCount(0, name.length) in NAME_LENGTH
 
         private val DELETABLE = setOf(DatabaseStatus.ACTIVE, DatabaseStatus.SUSPENDED, DatabaseStatus.FAILED)
 

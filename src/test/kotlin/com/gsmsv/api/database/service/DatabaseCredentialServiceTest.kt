@@ -50,7 +50,7 @@ class DatabaseCredentialServiceTest {
     private val actor = UserActor(ME)
 
     init {
-        every { repository.save(any()) } answers { firstArg() }
+        every { repository.saveAndFlush(any()) } answers { firstArg() }
     }
 
     @Test
@@ -107,7 +107,7 @@ class DatabaseCredentialServiceTest {
         assertEquals(Instant.parse("2026-11-10T09:00:00Z"), response.rotatedAt)
         assertEquals(0, response.reconnected.functions)
         assertEquals(0, response.reconnected.appCells)
-        verify(exactly = 1) { repository.save(database) }
+        verify(exactly = 1) { repository.saveAndFlush(database) }
         verify(exactly = 1) { auditRecorder.record(actor, AuditEventType.DATABASE_PASSWORD_ROTATE, GRN, emptyMap()) }
     }
 
@@ -128,7 +128,7 @@ class DatabaseCredentialServiceTest {
         val error = assertFailsWith<BusinessException> { service.rotate(actor, database) }
 
         assertEquals(ErrorCode.NOT_SUPPORTED_FOR_DEDICATED, error.errorCode)
-        verify(exactly = 0) { repository.save(any()) }
+        verify(exactly = 0) { repository.saveAndFlush(any()) }
         verify(exactly = 0) { auditRecorder.record(any(), any(), any(), any()) }
     }
 

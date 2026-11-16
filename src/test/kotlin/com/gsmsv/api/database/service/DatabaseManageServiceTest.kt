@@ -27,7 +27,7 @@ class DatabaseManageServiceTest {
     private val clock = Clock.fixed(now, ZoneOffset.UTC)
 
     init {
-        every { repository.save(any()) } answers { firstArg() }
+        every { repository.saveAndFlush(any()) } answers { firstArg() }
     }
 
     @Test
@@ -39,7 +39,7 @@ class DatabaseManageServiceTest {
         assertEquals("새 이름", database.name)
         assertEquals("grn:$ME:$DB_ID", response.grn)
         assertEquals("새 이름", response.name)
-        verify { repository.save(database) }
+        verify { repository.saveAndFlush(database) }
     }
 
     @Test
@@ -70,7 +70,7 @@ class DatabaseManageServiceTest {
 
         assertEquals(now.plusSeconds((6 + 14) * DAY), response.expiresAt)
         assertEquals(response.expiresAt, database.expiresAt)
-        verify { repository.save(database) }
+        verify { repository.saveAndFlush(database) }
     }
 
     @Test
@@ -82,7 +82,7 @@ class DatabaseManageServiceTest {
 
         assertEquals(ErrorCode.EXTENSION_NOT_YET_AVAILABLE, error.errorCode)
         assertEquals(expiresAt, database.expiresAt)
-        verify(exactly = 0) { repository.save(any()) }
+        verify(exactly = 0) { repository.saveAndFlush(any()) }
     }
 
     @Test

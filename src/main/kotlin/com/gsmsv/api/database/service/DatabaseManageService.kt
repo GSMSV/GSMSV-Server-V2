@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * DB 이름 수정(7.7)과 사용 기간 연장(7.9). 로더가 돌려준 [Database]를 받으므로 권한 판단은 끝난 상태다.
@@ -35,7 +36,7 @@ class DatabaseManageService(
         rawName: String,
     ): RenameDatabaseResponse {
         val name = rawName.trim()
-        if (name.codePointCount(0, name.length) !in NAME_LENGTH) {
+        if (!Database.isValidName(name)) {
             throw BusinessException(
                 ErrorCode.VALIDATION_FAILED,
                 details = mapOf("fields" to listOf(FieldErrorDetail("name", "DB 이름은 공백 제거 후 1~30자여야 합니다."))),
@@ -44,15 +45,17 @@ class DatabaseManageService(
         // 지우는 중인 DB의 이름을 바꿔도 의미가 없다
         if (database.status == DatabaseStatus.DELETING) throw BusinessException(ErrorCode.CONFLICT)
         database.rename(name)
-        databaseRepository.save(database)
+        // 저장해 두고 동시 변경 충돌이 있으면 여기서 알린다
+        databaseRepository.saveAndFlush(database)
         return RenameDatabaseResponse(GrnParser.format(database.owner.id, database.id), database.name)
     }
 
     /**
      * 만료 7일 전부터 14일씩 늘린다. 기준점은 "지금"과 기존 만료일 중 늦은 쪽이라 유예 중 연장해도 만료일 뒤로만 늘어난다.
      *
-     * 공유 DB 서버는 이 트랜잭션에 묶이지 않으므로 저장을 먼저 하고 계정 잠금 해제를 마지막에 한다.
-     * 해제가 실패하면 예외로 트랜잭션이 되돌아가 만료일만 늘고 계정은 잠긴 채로 남지 않는다.
+     * 공유 DB 서버는 이 트랜잭션에 묶이지 않으므로 UPDATE를 먼저 내보내고(`saveAndFlush`) 계정 잠금 해제를 마지막에 한다.
+     * 저장이 실패하거나 동시 변경과 충돌하면 계정은 풀리지 않고, 해제가 실패하면 예외로 트랜잭션이 되돌아간다.
+     * 만료일은 DB 정밀도(마이크로초)에 맞춰 잘라, 응답과 이후 조회 값이 같다.
      *
      * **(미정)** 연장을 신청할 수 있는 시점(7일)과 연장 길이(14일)는 계약의 VM 기간 규칙을 따랐다.
      */
@@ -67,16 +70,15 @@ class DatabaseManageService(
 
         val wasSuspended = database.status == DatabaseStatus.SUSPENDED
         val base = if (now.isAfter(database.expiresAt)) now else database.expiresAt
-        database.extend(base.plus(EXTEND_LENGTH))
-        databaseRepository.save(database)
+        database.extend(base.plus(EXTEND_LENGTH).truncatedTo(ChronoUnit.MICROS))
+        databaseRepository.saveAndFlush(database)
         if (wasSuspended) {
-            checkNotNull(provisionerProvider.ifAvailable) { "공유 DB 서버 연결이 설정되지 않았습니다." }.unlock(database.id)
+            provisionerProvider.requireAvailable().unlock(database.id)
         }
         return DatabaseExtendResponse(database.expiresAt)
     }
 
     private companion object {
-        val NAME_LENGTH = 1..30
         val EXTEND_WINDOW: Duration = Duration.ofDays(7)
         val EXTEND_LENGTH: Duration = Duration.ofDays(14)
 

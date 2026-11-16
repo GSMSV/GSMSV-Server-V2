@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.validation.FieldError
 import org.springframework.validation.method.ParameterErrors
 import org.springframework.web.HttpMediaTypeNotSupportedException
@@ -52,6 +53,16 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
                     exception.details,
                 ),
             )
+
+    /** 같은 행을 동시에 바꿔 늦게 커밋한 쪽이 밀린 경우. 다시 조회해서 시도하면 된다 */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException::class)
+    fun handleOptimisticLockingFailure(
+        exception: ObjectOptimisticLockingFailureException,
+        request: HttpServletRequest,
+    ): ResponseEntity<ErrorResponse> {
+        log.warn { "동시 변경으로 저장하지 못했습니다. entity=${exception.persistentClassName}" }
+        return errorResponse(ErrorCode.CONFLICT, requestIdOf(request))
+    }
 
     @ExceptionHandler(Exception::class)
     fun handleUnexpectedException(

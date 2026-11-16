@@ -111,6 +111,17 @@ class DatabaseTest {
     }
 
     @Test
+    fun `앞뒤 공백이 있거나 비었거나 30자를 넘는 이름은 받지 않는다`() {
+        val database = newDatabase()
+
+        for (name in listOf("", "   ", " 이름", "이름 ", "가".repeat(31))) {
+            assertFailsWith<IllegalArgumentException> { database.rename(name) }
+        }
+        database.rename("가".repeat(30))
+        assertEquals(30, database.name.length)
+    }
+
+    @Test
     fun `비밀번호는 처음에 없고 암호화한 값으로만 바꾼다`() {
         val database = newDatabase()
         assertEquals(null, database.passwordEncrypted)
