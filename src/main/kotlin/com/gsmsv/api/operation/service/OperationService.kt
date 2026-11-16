@@ -2,6 +2,7 @@ package com.gsmsv.api.operation.service
 
 import com.gsmsv.api.global.grn.IdGenerator
 import com.gsmsv.api.operation.domain.Operation
+import com.gsmsv.api.operation.domain.OperationStatus
 import com.gsmsv.api.operation.repository.OperationRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -37,5 +38,19 @@ class OperationService(
     ) {
         operation.fail(code)
         operationRepository.save(operation)
+    }
+
+    /**
+     * 메모리의 [Operation]이 이미 바뀌어 있어도(커밋이 실패해 되돌려진 경우) 저장된 값을 기준으로 실패로 끝낸다.
+     * 진행 중이 아니거나 없으면 아무것도 하지 않는다.
+     */
+    @Transactional
+    fun failRunning(
+        operationId: String,
+        code: String,
+    ) {
+        val operation = operationRepository.findById(operationId).orElse(null) ?: return
+        if (operation.status != OperationStatus.RUNNING) return
+        fail(operation, code)
     }
 }

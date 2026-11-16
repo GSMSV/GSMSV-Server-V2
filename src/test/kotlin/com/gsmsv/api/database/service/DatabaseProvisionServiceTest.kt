@@ -154,24 +154,6 @@ class DatabaseProvisionServiceTest {
     }
 
     @Test
-    fun `공백만 있거나 30자를 넘는 이름은 400 VALIDATION_FAILED이다`() {
-        for (name in listOf("   ", "가".repeat(31))) {
-            val error = assertFailsWith<BusinessException> { service.createPersonal(user, CreateDatabaseRequest(name, "mysql")) }
-            assertEquals(ErrorCode.VALIDATION_FAILED, error.errorCode)
-        }
-        assertEquals(30, "가".repeat(30).length)
-        service.createPersonal(user, CreateDatabaseRequest("가".repeat(30), "mysql"))
-    }
-
-    @Test
-    fun `postgresql은 아직 만들 수 없어 400 VALIDATION_FAILED이다`() {
-        val error = assertFailsWith<BusinessException> { service.createPersonal(user, CreateDatabaseRequest("DB", "postgresql")) }
-
-        assertEquals(ErrorCode.VALIDATION_FAILED, error.errorCode)
-        verify(exactly = 0) { repository.save(any()) }
-    }
-
-    @Test
     fun `관리자의 개인 DB는 개인 한도를 그대로 쓰되 기간은 31일이다`() {
         val saved = slot<Database>()
         every { repository.save(capture(saved)) } answers { firstArg() }

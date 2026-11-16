@@ -21,8 +21,11 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.Instant
 import java.util.Base64
+import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
@@ -48,6 +51,7 @@ class DatabaseProvisionJobTest {
     init {
         every { repository.save(any()) } answers { firstArg() }
         every { operationRepository.save(any()) } answers { firstArg() }
+        every { operationRepository.findById(operation.id) } returns Optional.of(operation)
     }
 
     @Test
@@ -108,6 +112,24 @@ class DatabaseProvisionJobTest {
         assertEquals(OperationStatus.SUCCEEDED, operation.status)
     }
 
+    @Test
+    fun `끝난 작업의 단계는 비운다`() {
+        job().run(database, operation, PASSWORD)
+
+        assertNull(operation.stage)
+    }
+
+    @Test
+    fun `성공 기록을 저장하지 못하면 만든 계정을 지우고 실패로 끝낸다`() {
+        every { repository.save(any()) } throws IllegalStateException("저장 실패")
+
+        job().run(database, operation, PASSWORD)
+
+        assertNull(provisioner.account(DB_ID))
+        assertEquals(OperationStatus.FAILED, operation.status)
+        assertEquals("UPSTREAM_UNAVAILABLE", operation.errorCode)
+    }
+
     private fun job(provisionerAvailable: Boolean = true) =
         DatabaseProvisionJob(
             repository,
@@ -115,6 +137,7 @@ class DatabaseProvisionJobTest {
             provide(cipher),
             provide<SharedDatabaseProvisioner>(if (provisionerAvailable) provisioner else null),
             notifications,
+            TransactionTemplate(mockk<PlatformTransactionManager>(relaxed = true)),
         )
 
     private inline fun <reified T : Any> provide(value: T?): ObjectProvider<T> =

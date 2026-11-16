@@ -36,7 +36,7 @@ class Operation(
     final var status: OperationStatus = OperationStatus.RUNNING
         private set
 
-    /** 진행 단계. 단계를 나누지 않는 작업은 `running` 하나다 */
+    /** 진행 단계. 단계를 나누지 않는 작업은 `running` 하나다. 끝나면 비운다 */
     @Column(length = 16)
     final var stage: String? = STAGE_RUNNING
         private set
@@ -59,6 +59,7 @@ class Operation(
     fun succeed(at: Instant = Instant.now()) {
         check(status == OperationStatus.RUNNING) { "진행 중인 작업만 성공으로 끝낼 수 있습니다." }
         status = OperationStatus.SUCCEEDED
+        stage = null
         finishedAt = at
     }
 
@@ -70,6 +71,7 @@ class Operation(
         check(status == OperationStatus.RUNNING) { "진행 중인 작업만 실패로 끝낼 수 있습니다." }
         status = OperationStatus.FAILED
         errorCode = code
+        stage = null
         finishedAt = at
     }
 

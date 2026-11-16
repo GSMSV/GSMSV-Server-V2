@@ -1,7 +1,7 @@
 package com.gsmsv.api.database.controller
 
 import com.gsmsv.api.database.dto.CreateDatabaseResponse
-import com.gsmsv.api.database.dto.CreatedDatabaseResource
+import com.gsmsv.api.database.dto.CreatedDatabaseResourceResponse
 import com.gsmsv.api.database.service.DatabaseProvisionService
 import com.gsmsv.api.global.authorization.Action
 import com.gsmsv.api.global.authorization.TeamLoader
@@ -44,7 +44,7 @@ class DatabaseCreateControllerTest(
     private val response =
         CreateDatabaseResponse(
             OperationRefResponse("op-4p8w2k9m1xza", "db.create", "running", "running"),
-            CreatedDatabaseResource("grn:$ME:db-k3m9x2p7q4ta", "creating"),
+            CreatedDatabaseResourceResponse("grn:$ME:db-k3m9x2p7q4ta", "creating"),
         )
 
     @Test
@@ -121,7 +121,13 @@ class DatabaseCreateControllerTest(
 
     @Test
     fun `엔진이 없거나 알 수 없으면 400이고 서비스를 부르지 않는다`() {
-        for (body in listOf("""{"name":"DB"}""", """{"name":"DB","engine":"oracle"}""", """{"engine":"mysql"}""")) {
+        for (body in listOf(
+            """{"name":"DB"}""",
+            """{"name":"DB","engine":"oracle"}""",
+            """{"name":"DB","engine":"postgresql"}""",
+            """{"name":"   ","engine":"mysql"}""",
+            """{"engine":"mysql"}""",
+        )) {
             mockMvc
                 .post("/api/v2/databases") {
                     bearer(tokens.user(ME))
@@ -130,6 +136,21 @@ class DatabaseCreateControllerTest(
                 }.andExpect { status { isBadRequest() } }
         }
         verify(exactly = 0) { provisionService.createPersonal(any(), any()) }
+    }
+
+    @Test
+    fun `이름은 공백을 뺀 1~30자만 받는다`() {
+        every { provisionService.createPersonal(any(), any()) } returns response
+        val tooLong = "가".repeat(31)
+        val okTrimmed = " " + "가".repeat(30) + " "
+        for (name in listOf(tooLong, okTrimmed)) {
+            mockMvc
+                .post("/api/v2/databases") {
+                    bearer(tokens.user(ME))
+                    contentType = MediaType.APPLICATION_JSON
+                    content = """{"name":"$name","engine":"mysql"}"""
+                }.andExpect { status { if (name == tooLong) isBadRequest() else isAccepted() } }
+        }
     }
 
     @Test

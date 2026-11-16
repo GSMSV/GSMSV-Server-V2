@@ -6,7 +6,7 @@ import com.gsmsv.api.database.domain.Database
 import com.gsmsv.api.database.domain.DatabaseEngine
 import com.gsmsv.api.database.dto.CreateDatabaseRequest
 import com.gsmsv.api.database.dto.CreateDatabaseResponse
-import com.gsmsv.api.database.dto.CreatedDatabaseResource
+import com.gsmsv.api.database.dto.CreatedDatabaseResourceResponse
 import com.gsmsv.api.database.repository.DatabaseQuotaLock
 import com.gsmsv.api.database.repository.DatabaseRepository
 import com.gsmsv.api.global.authorization.Owner
@@ -15,7 +15,6 @@ import com.gsmsv.api.global.exception.ErrorCode
 import com.gsmsv.api.global.grn.GrnParser
 import com.gsmsv.api.global.grn.IdGenerator
 import com.gsmsv.api.global.grn.ResourceType
-import com.gsmsv.api.global.response.FieldErrorDetail
 import com.gsmsv.api.global.security.AuthenticatedUser
 import com.gsmsv.api.global.security.Role
 import com.gsmsv.api.operation.dto.OperationRefResponse
@@ -71,8 +70,9 @@ class DatabaseProvisionService(
         countLimit: Int,
         lifetime: Duration,
     ): CreateDatabaseResponse {
-        val name = validName(request.name)
-        val engine = parseEngine(request.engine)
+        // 길이와 엔진은 요청 검증(Bean Validation)이 끝냈다
+        val name = request.name.trim()
+        val engine = DatabaseEngine.MYSQL
         val ownerType = if (owner is Owner.User) Database.OwnerType.USER else Database.OwnerType.TEAM
 
         quotaLock.lock(ownerType, owner.id)
@@ -93,30 +93,8 @@ class DatabaseProvisionService(
 
         return CreateDatabaseResponse(
             operation = OperationRefResponse.from(operation),
-            resource = CreatedDatabaseResource(GrnParser.format(owner.id, database.id), database.status.name.lowercase()),
+            resource = CreatedDatabaseResourceResponse(GrnParser.format(owner.id, database.id), database.status.name.lowercase()),
         )
-    }
-
-    private fun validName(raw: String): String {
-        val name = raw.trim()
-        if (name.codePointCount(0, name.length) !in NAME_LENGTH) {
-            throw BusinessException(
-                ErrorCode.VALIDATION_FAILED,
-                details = mapOf("fields" to listOf(FieldErrorDetail("name", "DB 이름은 공백 제거 후 1~30자여야 합니다."))),
-            )
-        }
-        return name
-    }
-
-    /** 1차는 MySQL만 만든다. PostgreSQL은 두 번째 단계다 (24번 DBaaS) */
-    private fun parseEngine(raw: String): DatabaseEngine {
-        if (raw != "mysql") {
-            throw BusinessException(
-                ErrorCode.VALIDATION_FAILED,
-                details = mapOf("fields" to listOf(FieldErrorDetail("engine", "지금은 mysql만 만들 수 있습니다."))),
-            )
-        }
-        return DatabaseEngine.MYSQL
     }
 
     /** 커밋되기 전에 일을 시작하면 아직 저장되지 않은 DB를 다루게 되므로 커밋된 뒤에 보낸다 */
@@ -137,7 +115,6 @@ class DatabaseProvisionService(
     private companion object {
         const val OPERATION_TYPE = "db.create"
         const val RESOURCE_TYPE = "db"
-        val NAME_LENGTH = 1..30
         val PERSONAL_LIFETIME: Duration = Duration.ofDays(14)
         val TEAM_LIFETIME: Duration = Duration.ofDays(31)
     }
