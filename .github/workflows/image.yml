@@ -61,6 +61,8 @@ jobs:
           output: trivy.sarif
           exit-code: '0'
           ignore-unfixed: true
+          # medium 이하는 배포판 backport·쓰지 않는 바이너리 CVE가 대부분이라 노이즈만 쌓인다. 심각한 것만 올린다
+          severity: HIGH,CRITICAL
 
       # 결과를 Security 탭(code scanning)에 올린다. github/* 액션이라 정책상 허용된다
       - name: 스캔 결과 업로드
