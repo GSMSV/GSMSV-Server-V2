@@ -7,6 +7,9 @@ const BRANCH_RE = new RegExp(`^${TYPE_GROUP}/(\\d+)-[a-z0-9]+(?:-[a-z0-9]+)*$`)
 const TITLE_RE = new RegExp(`^${TYPE_GROUP}(\\(([^)]*)\\))?(!)?: (.*)$`)
 const SCOPE_RE = /^[a-z][a-z0-9]*$/
 const HANGUL_RE = /[가-힣]/
+// develop → main 릴리스 PR 제목. 같은 날 두 번째 릴리스부터 순번을 1, 2…로 올린다
+const RELEASE_TITLE_RE = /^v\d{8}\.(0|[1-9]\d*)$/
+export const RELEASE_BASE = 'main'
 
 const TITLE_EXAMPLE = '예: feat: VM 생성 API 추가, feat(vm)!: VM 응답 형식 변경'
 
@@ -28,9 +31,11 @@ export function checkBranch(name) {
 /**
  * @param {string} title
  * @param {'commit' | 'pr' | 'issue'} kind
+ * @param {{ base?: string }} [options] PR의 base 브랜치. `main`이면 릴리스 제목 형식만 받는다
  * @returns {string[]}
  */
-export function checkTitle(title, kind) {
+export function checkTitle(title, kind, { base } = {}) {
+  if (kind === 'pr' && base === RELEASE_BASE) return checkReleaseTitle(title)
   const label = { commit: '커밋 메시지 제목', pr: 'PR 제목', issue: '이슈 제목' }[kind]
   const format = kind === 'issue' ? '`타입(scope): 한국어 설명`' : '`타입(scope)!: 한국어 설명`'
   const header = `${label} \`${title}\`: 형식은 ${format}. scope와 !는 선택 (${TITLE_EXAMPLE})`
@@ -60,4 +65,13 @@ export function checkTitle(title, kind) {
   if (/\.$/.test(description)) problems.push('끝에 마침표를 찍지 않는다')
   if (!HANGUL_RE.test(description)) problems.push('설명은 한국어로 쓴다')
   return problems.length ? [header, ...problems] : []
+}
+
+/** develop → main 릴리스 PR 제목: `vYYYYMMDD.N` (예: v20261117.0) */
+export function checkReleaseTitle(title) {
+  if (RELEASE_TITLE_RE.test(title)) return []
+  return [
+    `main 대상 PR 제목 \`${title}\`: 형식은 \`vYYYYMMDD.N\` (예: v20261117.0)`,
+    '날짜는 PR을 만드는 날(한국 시간), N은 그날의 릴리스 순번으로 0부터 시작한다. 같은 날 main 대상 PR이 이미 있으면 1, 2…로 올린다',
+  ]
 }

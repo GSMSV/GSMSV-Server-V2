@@ -109,8 +109,9 @@ export function findProblems(command, dialect, cwd = process.cwd()) {
     } else if (name === 'gh') {
       const [group, action, ...ghArgs] = ghSubcommand(rest)
       if ((group === 'pr' || group === 'issue') && (action === 'create' || action === 'edit')) {
+        const base = group === 'pr' ? optionValues(ghArgs, 'base', 'B').at(-1) : undefined
         for (const title of optionValues(ghArgs, 'title', 't')) {
-          problems.push(...checkTitle(firstLine(unwrapHeredocSubstitution(title)), group))
+          problems.push(...checkTitle(firstLine(unwrapHeredocSubstitution(title)), group, { base }))
         }
       }
     }
