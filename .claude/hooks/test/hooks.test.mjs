@@ -95,6 +95,16 @@ describe('PR·이슈 제목', () => {
     bad('gh pr create --title "Claude harness" --body x')
     bad('gh -R o/r pr create --title "feat: add" --body x')
   })
+  it('main 대상 PR은 vYYYYMMDD.N 형식만 받는다', () => {
+    ok('gh pr create --base main --head develop --title "v20261117.0" --body x')
+    ok('gh pr create -B main -t "v20261117.12" -b x')
+    ok('gh pr edit 5 --base main --title "v20261117.1"')
+    bad('gh pr create --base main --title "chore: develop을 main에 릴리스" --body x')
+    bad('gh pr create --base main --title "v202611171415.0" --body x')
+    bad('gh pr create --base main --title "v20261117" --body x')
+    bad('gh pr create --base main --title "v20261117.01" --body x')
+    bad('gh pr create --base develop --title "v20261117.0" --body x')
+  })
   it('이슈 제목에는 !를 쓰지 않는다', () => {
     ok('gh issue create --title "feat(vm): VM 생성 API" --body x')
     bad('gh issue create --title "feat(vm)!: VM 생성 API" --body x')
