@@ -1,9 +1,10 @@
-// PR 제목이 `타입(scope)!: 한국어 설명` 형식인지 검사한다.
+// PR 제목이 `타입(scope)!: 한국어 설명` 형식인지 검사한다. main 대상 PR은 `vYYYYMMDD.N` 형식만 받는다.
 // 규칙은 Claude Code hook과 같은 .claude/hooks/lib/conventions.mjs를 그대로 쓴다.
 import { checkTitle } from '../../.claude/hooks/lib/conventions.mjs'
 
 const title = process.env.PR_TITLE ?? ''
-const problems = checkTitle(title, 'pr')
+const base = process.env.BASE_REF ?? ''
+const problems = checkTitle(title, 'pr', { base })
 
 if (problems.length === 0) {
   console.log(`PR 제목 형식 통과: ${title}`)
