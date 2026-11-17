@@ -1,0 +1,59 @@
+name: CodeQL
+
+# advanced setup. PR 트리거를 두지 않아 PR에 인라인 알림을 달지 않는다.
+# 결과는 Security 탭에만 쌓고, 사람이 거기서 triage한다 (fix 제안은 Copilot Autofix가 alert에 유지)
+on:
+  push:
+    branches: [develop]
+  schedule:
+    - cron: '0 18 * * 0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: 코드 취약점 검사 (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: autobuild
+          - language: javascript-typescript
+            build-mode: none
+          - language: actions
+            build-mode: none
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # java-kotlin은 컴파일을 거쳐야 분석된다. CI와 같은 JDK 21을 쓰고, 힙은 gradle.properties로 올려 둬 OOM을 막는다
+      - if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: CodeQL 초기화
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: CodeQL 분석
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
