@@ -2,6 +2,7 @@ name: 배포
 
 # 자동 배포는 이미지 workflow가 이미지 job 뒤에 이 workflow를 호출한다 (workflow_call).
 # workflow_run으로 이어 붙이면 실행이 기본 브랜치(develop)에서 돈 것으로 기록돼 main 조건과 이미지 태그가 어긋난다
+# target이 배포할 서버를 정한다: production → prod 라벨 runner(운영 서버), development → dev 라벨 runner(개발 서버)
 on:
   workflow_call:
     inputs:
@@ -9,11 +10,20 @@ on:
         description: 배포할 이미지 태그(커밋 SHA)
         type: string
         required: true
+      target:
+        description: 배포할 서버 (production 또는 development)
+        type: string
+        required: true
   workflow_dispatch:
     inputs:
       tag:
         description: 배포할 이미지 태그(커밋 SHA). 비우면 지금 커밋
         required: false
+      target:
+        description: 배포할 서버
+        type: choice
+        options: [development, production]
+        default: development
 
 permissions:
   contents: read
@@ -21,13 +31,16 @@ permissions:
 
 jobs:
   deploy:
-    name: 운영 서버 배포
-    runs-on: [self-hosted, Linux]
-    environment: production
+    name: ${{ inputs.target == 'production' && '운영 서버 배포' || '개발 서버 배포' }}
+    # 정해진 두 값이 아니면 아무 서버에도 배포하지 않는다
+    if: inputs.target == 'production' || inputs.target == 'development'
+    # 운영·개발 runner는 라벨(prod·dev)로만 구분한다. 서로의 배포를 가져가지 않는다
+    runs-on: [self-hosted, Linux, "${{ inputs.target == 'production' && 'prod' || 'dev' }}"]
+    environment: ${{ inputs.target }}
     timeout-minutes: 15
-    # 호출·수동 실행이 겹쳐도 배포는 한 번에 하나만 돈다
+    # 같은 서버에 대한 배포는 한 번에 하나만 돈다
     concurrency:
-      group: deploy-production
+      group: deploy-${{ inputs.target }}
       cancel-in-progress: false
     env:
       TAG: ${{ inputs.tag || github.sha }}
