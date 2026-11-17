@@ -7,6 +7,8 @@ NEW_TAG="${1:?이미지 태그가 필요하다}"
 ENV_FILE="${ENV_FILE:?ENV_FILE이 필요하다}"
 STATE_FILE="${STATE_FILE:?STATE_FILE이 필요하다}"
 COMPOSE_FILE="$(cd "$(dirname "$0")" && pwd)/compose.yml"
+# compose.yml의 app 이미지 이름과 같아야 한다
+IMAGE_REPO="ghcr.io/gsmsv/gsmsv-server-v2"
 
 compose() {
   docker compose -p gsmsv -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"
@@ -24,6 +26,17 @@ health_check() {
   return 1
 }
 
+# 이 서버 이미지 중 새 태그와 직전 태그만 남긴다. 직전 태그는 다음 배포가 실패했을 때 되돌리는 데 쓴다
+cleanup_images() {
+  local tag
+  docker image ls "$IMAGE_REPO" --format '{{.Tag}}' | while read -r tag; do
+    if [ "$tag" != "$NEW_TAG" ] && [ "$tag" != "$PREV_TAG" ]; then
+      docker image rm "${IMAGE_REPO}:${tag}" || true
+    fi
+  done
+  docker image prune -f
+}
+
 PREV_TAG="$(cat "$STATE_FILE" 2>/dev/null || true)"
 echo "이전 태그: ${PREV_TAG:-없음} → 새 태그: ${NEW_TAG}"
 
@@ -33,7 +46,8 @@ compose up -d
 
 if health_check; then
   echo "$NEW_TAG" > "$STATE_FILE"
-  docker image prune -f
+  # 정리에 실패해도 배포 결과는 성공으로 둔다
+  cleanup_images || echo "이미지 정리 실패 (배포는 성공)"
   echo "배포 성공: ${NEW_TAG}"
   exit 0
 fi

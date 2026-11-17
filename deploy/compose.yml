@@ -1,9 +1,17 @@
 name: gsmsv
 
+# 컨테이너 로그가 디스크를 계속 차지하지 않게 크기를 제한한다 (컨테이너당 최대 10MB x 3개)
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     image: ghcr.io/gsmsv/gsmsv-server-v2:${IMAGE_TAG:?IMAGE_TAG가 필요하다}
     restart: unless-stopped
+    logging: *logging
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:?}
       DB_URL: ${DB_URL:?}
@@ -24,6 +32,7 @@ services:
   db:
     image: postgres:18
     restart: unless-stopped
+    logging: *logging
     environment:
       POSTGRES_DB: gsmsv
       POSTGRES_USER: ${DB_USERNAME:?}
