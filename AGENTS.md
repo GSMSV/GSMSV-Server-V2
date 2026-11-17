@@ -46,6 +46,7 @@ date -u +V%Y%m%d%H%M%S                       # 새 마이그레이션 파일의 
 | 브랜치 | `타입/이슈번호-설명` | `feat/12-vm-create-api` |
 | 커밋·PR 제목 | `타입(scope)!: 한국어 설명` | `feat(vm): VM 생성 API 추가` |
 | 이슈 제목 | `타입(scope): 한국어 설명` | `feat(vm): VM 생성 API` |
+| develop → main PR 제목 | `vYYYYMMDD.N` | `v20261117.0` |
 
 - 브랜치: 정규식 `^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)/[0-9]+-[a-z0-9]+(-[a-z0-9]+)*$`. 설명은 영어 소문자·숫자, 단어는 하이픈(`-`)으로 잇는다
 - `(scope)`는 선택이다. 영어 소문자(`^[a-z][a-z0-9]*$`)이고, 값은 아래 둘 중 하나의 패키지 이름을 그대로 쓴다. 목록은 따로 관리하지 않는다. 여러 영역에 걸치거나 해당 영역이 없으면 뺀다
@@ -54,6 +55,7 @@ date -u +V%Y%m%d%H%M%S                       # 새 마이그레이션 파일의 
 - `!`는 호환성을 깨는 변경(API 계약 변경)에만 붙인다. 이슈 제목에는 쓰지 않는다
 - 콜론 앞은 붙이고 뒤는 한 칸 띄운다. 설명은 한국어, 끝에 마침표 없음
 - 커밋 타입은 커밋 내용에 맞춰 고른다 (브랜치 타입과 달라도 된다. 예: `feat` 브랜치 안의 `test` 커밋). PR 제목 타입은 브랜치 타입을 쓴다
+- develop → main 릴리스 PR 제목은 `vYYYYMMDD.N`으로 고정이다 ([CONTRIBUTING 6장](.github/CONTRIBUTING.md)). 날짜는 한국 시간, N은 그날의 순번(0부터)이다. 만들기 전에 `gh pr list --base main --state all --search v{날짜}`로 그날 순번을 확인한다. base가 main이라 `write-pr` 스킬 대상이 아니다
 - 한 PR에는 한 가지 일만. **PR 제목이 그대로 develop의 squash 커밋 메시지가 된다**
 
 예: `feat(vm): VM 생성 API 추가`, `test(grn): GRN 파서 실패 케이스 추가`, `build: ktlint 도입`, `feat(vm)!: VM 응답 형식 변경`
