@@ -24,4 +24,5 @@ jobs:
       - name: PR 제목 형식 확인
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: node .github/scripts/check-pr-title.mjs
