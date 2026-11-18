@@ -1,6 +1,7 @@
 package com.gsmsv.api.vm.config
 
 import jakarta.validation.Valid
+import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Pattern
@@ -19,10 +20,10 @@ import org.springframework.validation.annotation.Validated
 data class VmImageProperties(
     @field:NotEmpty @field:Valid val images: List<Image>,
 ) {
-    init {
-        val duplicated = images.groupBy { it.id }.filterValues { it.size > 1 }.keys
-        require(duplicated.isEmpty()) { "gsmsv.vm.images의 id가 겹친다: $duplicated" }
-    }
+    // 다른 칸 검사와 같은 검증 단계에서 같은 형식의 오류로 실패하게 init 대신 Bean Validation으로 검사한다
+    @get:AssertTrue(message = "gsmsv.vm.images의 id가 겹친다")
+    val isIdUnique: Boolean
+        get() = images.map { it.id }.toSet().size == images.size
 
     data class Image(
         // 내부 API(VM 만들기)의 `image`로 그대로 넘기므로 같은 형식을 쓴다

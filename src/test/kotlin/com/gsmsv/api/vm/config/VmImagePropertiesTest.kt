@@ -48,7 +48,7 @@ class VmImagePropertiesTest {
     fun `id가 겹치면 기동에 실패한다`() {
         runner
             .withPropertyValues(*image(), *image(index = 1))
-            .run { context -> assertNotNull(context.startupFailure) }
+            .run { context -> assertTrue(causesOf(context.startupFailure).any { it is BindValidationException }) }
     }
 
     @Test
