@@ -4,6 +4,7 @@ GSMSV v2의 Kotlin API 서버(Spring Boot)다. AI 코딩 도구(Claude Code, Cod
 
 - 사람용 원본 규칙은 [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)다. 깃 규칙이 충돌하면 CONTRIBUTING이 우선한다
 - 저장소끼리 함께 쓰는 약속(API 명세, 권한, 자원 이름)의 원본은 [GSMSV-Contracts-V2](https://github.com/GSMSV/GSMSV-Contracts-V2)(이하 "계약")다. 이 문서는 계약을 다시 쓰지 않고 가리키기만 한다. 이 문서와 계약이 다르면 계약이 맞다
+- 커밋·PR·이슈·리뷰 처리 절차는 `.claude/skills/`의 스킬에 있다 (`git-commit`, `write-pr`, `create-issue`, `resolve-reviews`). Codex는 해당 `SKILL.md`를 읽고 그 절차를 따른다
 - 커밋·PR·이슈 절차는 `.claude/skills/`의 스킬에 있다 (`git-commit`, `write-pr`, `create-issue`)
 - Codex용 하네스는 따로 둔다. 스킬은 `.agents/skills/`에 같은 내용의 사본이 있고, hook은 `.codex/hooks.json`이 `.claude/hooks/`의 스크립트를 그대로 부른다
   - `.claude/skills/`를 고치면 `.agents/skills/`도 똑같이 고친다. 두 폴더가 다르면 CI("하네스 사본 검사")가 실패한다
@@ -78,6 +79,8 @@ date -u +V%Y%m%d%H%M%S                       # 새 마이그레이션 파일의 
 ### 1.4 이슈·커밋·PR
 
 - 이슈는 `create-issue` 스킬로 만든다
+- 커밋은 `git-commit` 스킬, PR은 `write-pr` 스킬로 만든다. PR 리뷰는 `resolve-reviews` 스킬로 처리한다
+- PR의 base는 `develop`이다. develop을 따라잡을 때는 `git fetch origin && git merge origin/develop` (rebase·force push는 하지 않는다)
 - 커밋은 `git-commit` 스킬, PR은 `write-pr` 스킬로 만든다
 - PR의 base는 `develop`이다 (릴리스 PR만 `main`). develop을 따라잡을 때는 `git fetch origin && git merge origin/develop` (rebase·force push는 하지 않는다)
 - develop에 들어간 수정을 PR CI에 반영하려면 위처럼 병합한 뒤 push한다. GitHub Actions의 Re-run은 처음 실행 때의 develop 기준으로 다시 돌아서 반영되지 않는다
