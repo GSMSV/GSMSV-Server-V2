@@ -92,6 +92,24 @@ gsmsv:
       per-vm-limit: 2
       # v1 예약어 목록으로 시작한다. 목록은 계약이 아직 정하지 않았다 (Contracts-V2 23번 12장)
       reserved-subdomains: admin,api,www,status,app,mail,ftp,gsmsv
+  vm:
+    # 고를 수 있는 운영체제 (Contracts-V2 policies/quota.md 5장, 31번). 순서는 화면에 보여 줄 순서다
+    # 최소 RAM·SSD는 운영체제 공식 최소 기준을 1 GiB 단위로 올림한 값이다
+    # template-disk-gib(템플릿 디스크 크기)는 Infra가 정한다. 넣으면 실제 최소 SSD가 그 값보다 작아지지 않는다
+    images:
+      - id: ubuntu-24.04
+        name: Ubuntu 24.04 LTS
+        min-ram-gib: 1
+        min-ssd-gib: 4
+      - id: ubuntu-22.04
+        name: Ubuntu 22.04 LTS
+        min-ram-gib: 1
+        min-ssd-gib: 4
+      - id: debian-13
+        name: Debian 13
+        # 공식 최소 512 MB를 1 GiB로 올림했다
+        min-ram-gib: 1
+        min-ssd-gib: 4
   infra:
     # Go 내부 API 연결 설정. 값은 환경 변수로만 받고 기본값에 실제 값을 두지 않는다 (dev·local은 모의 구현이라 비어 있어도 된다)
     base-url: ${INFRA_BASE_URL:}
