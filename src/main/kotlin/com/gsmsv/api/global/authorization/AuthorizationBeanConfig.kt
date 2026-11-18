@@ -27,6 +27,12 @@ class AuthorizationBeanConfig {
     ) = TeamLoader(policy, auditLogger)
 
     @Bean
+    fun operationLoader(
+        policy: AuthorizationPolicy,
+        auditLogger: AuthorizationAuditLogger,
+    ) = OperationLoader(policy, auditLogger)
+
+    @Bean
     fun platformLoader(
         policy: AuthorizationPolicy,
         auditLogger: AuthorizationAuditLogger,
