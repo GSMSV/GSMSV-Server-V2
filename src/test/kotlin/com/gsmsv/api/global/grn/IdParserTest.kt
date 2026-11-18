@@ -53,6 +53,27 @@ class IdParserTest {
     }
 
     @Test
+    fun `맞는 operation id는 그대로 돌려준다`() {
+        assertEquals("op-7w8k9q0p1a2s", IdParser.requireOperationId("op-7w8k9q0p1a2s"))
+    }
+
+    @Test
+    fun `새로 만든 operation id는 형식 검사를 통과한다`() {
+        repeat(100) {
+            val id = IdGenerator.operationId()
+            assertEquals(id, IdParser.requireOperationId(id))
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = ["", "op-7w8k9q0p1a2", "op-7w8k9q0p1a2sx", "op-7w8k9q0p1a2l", "OP-7w8k9q0p1a2s", "job-7w8k9q0p1a2s", "op-7w8k9q0p1a2s\n"],
+    )
+    fun `틀린 operation id는 INVALID_RESOURCE_ID로 거절한다`(id: String) {
+        assertEquals(ErrorCode.INVALID_RESOURCE_ID, assertThrows<BusinessException> { IdParser.requireOperationId(id) }.errorCode)
+    }
+
+    @Test
     fun `맞는 하위 자원 id는 접두사 10종 모두 종류와 함께 돌려준다`() {
         val examples =
             mapOf(

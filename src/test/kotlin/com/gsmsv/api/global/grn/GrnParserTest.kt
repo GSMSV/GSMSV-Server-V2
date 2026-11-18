@@ -82,6 +82,18 @@ class GrnParserTest {
         assertThrows<IllegalStateException> { GrnParser.format("vm-k3m9x2p7q4ta", "vm-k3m9x2p7q4ta") }
     }
 
+    @Test
+    fun `DB 값으로 하위 자원 표기를 만든다`() {
+        assertEquals("$VM_GRN/snap-7qz3m8k2", GrnParser.formatSubResource(OWNER, "vm-k3m9x2p7q4ta", "snap-7qz3m8k2"))
+    }
+
+    @Test
+    fun `DB 값이 형식에 맞지 않으면 하위 자원 표기를 만들지 않는다`() {
+        assertThrows<IllegalStateException> { GrnParser.formatSubResource(OWNER, "vm-k3m9x2p7q4ta", "snap-7qz3m8k") }
+        // 서버리스 함수 밑에는 스냅샷이 붙지 않는다
+        assertThrows<IllegalStateException> { GrnParser.formatSubResource(OWNER, "fn-6d2r8t5y3n7e", "snap-7qz3m8k2") }
+    }
+
     companion object {
         private const val OWNER = "team-4p8w2k9m1xza"
         private const val VM_GRN = "grn:$OWNER:vm-k3m9x2p7q4ta"

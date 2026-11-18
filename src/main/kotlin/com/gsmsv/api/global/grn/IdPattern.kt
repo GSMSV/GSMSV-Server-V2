@@ -24,6 +24,7 @@ internal object IdPattern {
     const val TEAM_PREFIX = "team"
     const val TEAM_MEMBER_PREFIX = "mbr"
     const val NOTIFICATION_PREFIX = "ntf"
+    const val OPERATION_PREFIX = "op"
 
     val SERVICE_PREFIXES = ResourceType.entries.joinToString("|") { it.prefix }
     val SUB_RESOURCE_PREFIXES = SubResourceType.entries.joinToString("|") { it.prefix }
