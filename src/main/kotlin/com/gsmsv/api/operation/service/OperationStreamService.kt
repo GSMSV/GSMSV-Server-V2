@@ -126,6 +126,7 @@ class OperationStreamService(
     )
 
     private companion object {
+        /** SSE `event:` 줄의 값. 계약 `openapi/operation.yaml`의 이벤트 이름과 같아야 화면이 받는다 */
         const val EVENT_NAME = "operation"
     }
 }

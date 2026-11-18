@@ -89,7 +89,10 @@ class OperationService(
     @Transactional
     fun markJobLost(operationId: String) {
         val operation = find(operationId)
-        log.warn { "Infra 작업 기록이 없다: operationId=$operationId" }
+        log.warn {
+            "Infra 작업 기록이 없어 실패로 마무리한다: operationId=$operationId, type=${operation.type.value}, " +
+                "jobId=${operation.jobId}, status=${operation.status.value}, stage=${operation.stage.value}"
+        }
         report(operation, OperationStatus.FAILED, operation.stage, operation.queuePosition, JOB_LOST)
     }
 
