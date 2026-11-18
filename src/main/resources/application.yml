@@ -100,6 +100,15 @@ gsmsv:
     secret-header: X-Internal-Secret
     connect-timeout: 2s
     read-timeout: 10s
+  operation:
+    # 끝난 작업을 조회할 수 있는 기간과 SSE 연결 유지 간격은 Contracts-V2 openapi/operation.yaml을 따른다
+    retention: 30d
+    stream-heartbeat: 15s
+    stream-timeout: 30m
+    # 아래 둘은 @Scheduled에 들어가므로 ISO-8601 기간 형식으로 쓴다
+    stream-check-interval: PT1S
+    job-poll-interval: PT2S
+    cleanup-cron: 0 30 18 * * *
 
 management:
   endpoints:
