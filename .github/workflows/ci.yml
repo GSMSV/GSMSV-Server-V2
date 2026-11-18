@@ -67,6 +67,20 @@ jobs:
           git fetch --no-tags --force origin "$BASE_REF:refs/remotes/origin/$BASE_REF"
           node .github/scripts/check-migrations.mjs
 
+  # Codex는 .agents/skills의 사본을 읽는다. 원본(.claude/skills)만 고치면 두 도구의 규칙이 갈라진다
+  harness:
+    name: 하네스 사본 검사
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: 스킬 사본 확인
+        run: node .github/scripts/check-harness-sync.mjs
+
   # develop 대상 PR은 단위 테스트만 돌리고, main 대상 PR(develop → main)과 main push에서만 통합 테스트를 돈다
   integration:
     name: 통합 테스트
