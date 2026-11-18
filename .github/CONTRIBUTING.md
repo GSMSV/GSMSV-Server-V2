@@ -160,8 +160,9 @@ Closes #12
 
 1. Pull requests 탭 → New pull request → **base: `main`, compare: `develop`**
 2. 제목은 `vYYYYMMDD.N` 형식으로 고정한다 (예: `v20261117.0`). 날짜는 PR을 만드는 날(한국 시간)이고, N은 그날의 릴리스 순번으로 0부터 시작한다. 같은 날 main으로 가는 PR이 또 있으면 `v20261117.1`, `v20261117.2`…로 올린다. CI("PR 제목")가 형식을 검사한다
-3. **CI를 통과하고 작성자가 아닌 사람 1명이 승인**해야 합칠 수 있다. 저장소에 코드 오너(담당자 목록, `CODEOWNERS` 파일)가 정해져 있으면 그중 1명이 승인해야 한다
-4. 승인되면 **Create a merge commit**으로 합친다 (main으로 갈 때는 이 버튼만 있다)
+3. 릴리스 PR은 이슈 없이 만든다. 본문 맨 위 `## 릴리스 범위`에 시작(main의 커밋 해시, 직전 릴리스 이름)과 끝(develop의 커밋 해시)을 적고, 그 아래 포함된 PR 목록을 적는다
+4. **CI를 통과하고 작성자가 아닌 사람 1명이 승인**해야 합칠 수 있다. 저장소에 코드 오너(담당자 목록, `CODEOWNERS` 파일)가 정해져 있으면 그중 1명이 승인해야 한다
+5. 승인되면 **Create a merge commit**으로 합친다 (main으로 갈 때는 이 버튼만 있다)
 
 승인하는 방법: PR 화면 → **Files changed** 탭 → 오른쪽 위 **Review changes** → **Approve** → **Submit review**
 
