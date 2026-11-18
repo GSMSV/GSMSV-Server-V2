@@ -33,6 +33,8 @@ class SecurityConfig : WebMvcConfigurer {
             .authorizeHttpRequests {
                 // 오류 응답을 만드는 내부 재요청이 401로 바뀌지 않게 연다
                 it.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                // SSE는 응답을 비동기로 이어 쓴다. 인증·권한은 첫 요청에서 이미 판단했으므로 재디스패치는 연다
+                it.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                 it.requestMatchers(*PUBLIC_PATHS).permitAll()
                 it.anyRequest().authenticated()
             }.oauth2ResourceServer {
