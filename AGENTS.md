@@ -5,6 +5,10 @@ GSMSV v2의 Kotlin API 서버(Spring Boot)다. AI 코딩 도구(Claude Code, Cod
 - 사람용 원본 규칙은 [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)다. 깃 규칙이 충돌하면 CONTRIBUTING이 우선한다
 - 저장소끼리 함께 쓰는 약속(API 명세, 권한, 자원 이름)의 원본은 [GSMSV-Contracts-V2](https://github.com/GSMSV/GSMSV-Contracts-V2)(이하 "계약")다. 이 문서는 계약을 다시 쓰지 않고 가리키기만 한다. 이 문서와 계약이 다르면 계약이 맞다
 - 커밋·PR·이슈·리뷰 처리 절차는 `.claude/skills/`의 스킬에 있다 (`git-commit`, `write-pr`, `create-issue`, `resolve-reviews`). Codex는 해당 `SKILL.md`를 읽고 그 절차를 따른다
+- 커밋·PR·이슈 절차는 `.claude/skills/`의 스킬에 있다 (`git-commit`, `write-pr`, `create-issue`)
+- Codex용 하네스는 따로 둔다. 스킬은 `.agents/skills/`에 같은 내용의 사본이 있고, hook은 `.codex/hooks.json`이 `.claude/hooks/`의 스크립트를 그대로 부른다
+  - `.claude/skills/`를 고치면 `.agents/skills/`도 똑같이 고친다. 두 폴더가 다르면 CI("하네스 사본 검사")가 실패한다
+  - 확인: `node .github/scripts/check-harness-sync.mjs`
 
 ## 절대 규칙
 
@@ -23,6 +27,7 @@ GSMSV v2의 Kotlin API 서버(Spring Boot)다. AI 코딩 도구(Claude Code, Cod
 ./gradlew ktlintFormat                       # 스타일 자동 수정
 ./gradlew test --tests 'com.gsmsv.api.vm.*'  # 관련 테스트만 (4장)
 node --test .claude/hooks/test/hooks.test.mjs  # .claude/hooks/를 고쳤을 때
+node .github/scripts/check-harness-sync.mjs    # .claude/skills/를 고쳤을 때
 BASE_REF=develop node .github/scripts/check-migrations.mjs  # 마이그레이션을 추가했을 때 (2.3)
 date -u +V%Y%m%d%H%M%S                       # 새 마이그레이션 파일의 버전 (2.3)
 ```
@@ -33,7 +38,7 @@ date -u +V%Y%m%d%H%M%S                       # 새 마이그레이션 파일의 
 
 ## 1. 깃
 
-원본: [CONTRIBUTING 3~5장](.github/CONTRIBUTING.md). Claude Code에서는 hook(`.claude/hooks/check-git-format.mjs`)이 형식을 검사한다. 규칙 값은 `.claude/hooks/lib/conventions.mjs`에 있다.
+원본: [CONTRIBUTING 3~5장](.github/CONTRIBUTING.md). Claude Code와 Codex에서는 hook(`.claude/hooks/check-git-format.mjs`)이 형식을 검사한다. 규칙 값은 `.claude/hooks/lib/conventions.mjs`에 있다.
 
 ### 1.1 타입
 
@@ -55,7 +60,7 @@ date -u +V%Y%m%d%H%M%S                       # 새 마이그레이션 파일의 
 - `!`는 호환성을 깨는 변경(API 계약 변경)에만 붙인다. 이슈 제목에는 쓰지 않는다
 - 콜론 앞은 붙이고 뒤는 한 칸 띄운다. 설명은 한국어, 끝에 마침표 없음
 - 커밋 타입은 커밋 내용에 맞춰 고른다 (브랜치 타입과 달라도 된다. 예: `feat` 브랜치 안의 `test` 커밋). PR 제목 타입은 브랜치 타입을 쓴다
-- develop → main 릴리스 PR 제목은 `vYYYYMMDD.N`으로 고정이다 ([CONTRIBUTING 6장](.github/CONTRIBUTING.md)). 날짜는 한국 시간, N은 그날의 순번(0부터)이다. 만들기 전에 `gh pr list --base main --state all --search v{날짜}`로 그날 순번을 확인한다. base가 main이라 `write-pr` 스킬 대상이 아니다
+- develop → main 릴리스 PR 제목은 `vYYYYMMDD.N`으로 고정이다 ([CONTRIBUTING 6장](.github/CONTRIBUTING.md)). 날짜는 한국 시간, N은 그날의 순번(0부터)이다. 릴리스 PR은 이슈 없이 만들고, 본문 맨 위에 릴리스 범위(main의 어느 커밋부터 develop의 어느 커밋까지)를 적는다. 절차는 `write-pr` 스킬의 "릴리스 PR" 절에 있다
 - 한 PR에는 한 가지 일만. **PR 제목이 그대로 develop의 squash 커밋 메시지가 된다**
 
 예: `feat(vm): VM 생성 API 추가`, `test(grn): GRN 파서 실패 케이스 추가`, `build: ktlint 도입`, `feat(vm)!: VM 응답 형식 변경`
@@ -76,6 +81,20 @@ date -u +V%Y%m%d%H%M%S                       # 새 마이그레이션 파일의 
 - 이슈는 `create-issue` 스킬로 만든다
 - 커밋은 `git-commit` 스킬, PR은 `write-pr` 스킬로 만든다. PR 리뷰는 `resolve-reviews` 스킬로 처리한다
 - PR의 base는 `develop`이다. develop을 따라잡을 때는 `git fetch origin && git merge origin/develop` (rebase·force push는 하지 않는다)
+- 커밋은 `git-commit` 스킬, PR은 `write-pr` 스킬로 만든다
+- PR의 base는 `develop`이다 (릴리스 PR만 `main`). develop을 따라잡을 때는 `git fetch origin && git merge origin/develop` (rebase·force push는 하지 않는다)
+- develop에 들어간 수정을 PR CI에 반영하려면 위처럼 병합한 뒤 push한다. GitHub Actions의 Re-run은 처음 실행 때의 develop 기준으로 다시 돌아서 반영되지 않는다
+- CI를 살리는 수정은 다른 PR의 병합을 기다리지 않는 가장 작은 PR로 따로 올린다. 정리·리팩터링은 CI가 통과한 뒤 다른 PR에서 한다 (CI 수정이 다른 PR 병합을 기다리고, 그 PR은 CI를 기다리면 서로 막힌다)
+
+### 1.5 충돌 해결
+
+병렬 브랜치가 많아 병합할 때 한쪽 변경이 빠지는 사고가 났다. 충돌을 풀었으면 push하기 전에 아래를 확인한다.
+
+- 충돌 표시(`<<<<<<<`, `=======`, `>>>>>>>`)가 남지 않았다: `git diff --check`, `git grep -nE '^(<<<<<<<|>>>>>>>)'`
+- 파일이 중간에 잘리지 않았다. 충돌 난 파일은 끝까지 열어 본다
+- `git checkout --ours`/`--theirs`로 파일을 통째로 골랐으면 `git diff <반대쪽 브랜치> -- <파일>`로 반대쪽에만 있던 변경이 빠지지 않았는지 본다
+- 여러 PR이 함께 늘리는 곳(`ErrorCode`, 설정 파일, enum)에 같은 이름이 두 번 선언되지 않았다
+- `./gradlew compileKotlin compileTestKotlin ktlintCheck`와 관련 테스트(4.1)가 통과한다
 
 ## 2. Kotlin 코드
 
@@ -165,6 +184,7 @@ com.gsmsv.api
 - CI는 develop 대상 PR에서 `test`(단위)만, main 대상 PR(develop → main)에서는 `integrationTest`까지 돌린다
 - Gradle 빌드 캐시가 켜져 있다 (`gradle.properties`의 `org.gradle.caching=true`)
 - 결과는 **실패한 테스트와 원인만** 보고한다. 통과한 목록이나 전체 로그를 붙이지 않는다
+- 로컬에 Docker가 없어 Testcontainers 테스트가 실패하면(`Could not find a valid Docker environment`) 코드 실패가 아니라 "환경 때문에 못 돌림"으로 보고한다. 통과로 치지 않고, PR Test plan에는 `- [ ]`로 두어 CI에 맡긴다
 
 ### 4.2 스타일
 
@@ -193,6 +213,11 @@ com.gsmsv.api
 
 **(미정)** 은 계약이 아직 정하지 않은 항목이다. 지금 서버가 어떻게 동작하는지만 적는다. 계약이 정해지면 서버 코드와 이 문서를 함께 고친다.
 
+(미정) 항목은 계약이 정해질 때까지 이 문서에만 남긴다. 작업이 (미정) 항목에 걸리면 그 작업의 이슈를 만들 때 정한다 (`create-issue` 스킬 1장).
+
+- 이슈의 구현 방안에 고른 값과 이유를 적고 사용자와 맞춘다
+- 완료 조건에 "계약 반영(Contracts-V2 PR)"과 "이 문서의 (미정) 표시 제거"를 넣는다
+
 ### 5.3 권한 판단 (22번)
 
 어기면 보안 사고로 이어진다.
@@ -202,6 +227,7 @@ com.gsmsv.api
   - `ServiceResourceLoader` (GRN): 파서 검사 → id로 DB 1회 조회 → DB 값으로 GRN을 다시 만들어 요청 GRN과 통째로 비교(다르면 404) → 규칙표 판단
   - `SubResourceLoader` (부모 GRN + 하위 id, 또는 하위 자원 표기): 하위 id 형식 검사 → 부모를 위 과정으로 통과시킨 뒤 하위 자원을 찾고, 실제 부모가 요청의 부모와 같은지 확인(다르면 404). 부모 GRN 없이 하위 id만으로 찾는 길은 두지 않는다
   - `TeamLoader` (팀 id): 팀 id 형식 검사 → 같은 규칙표로 판단하고 감사 로그를 남긴다. 팀 앞으로 VM·데이터베이스를 만드는 동작도 이 로더로 판단한다
+- 오래 걸리는 작업(operation, `op-…`)은 `OperationLoader`로 판단한다. id 형식 검사 → DB 1회 조회 → 등록할 때 복사해 둔 대상 자원의 DB 소유자로 같은 규칙표 판단. 그래서 대상 자원이 지워진 뒤에도 보관 기간 동안 같은 기준으로 볼 수 있다. operation은 `OperationService.register`에 **로더가 돌려준 자원**을 넘겨서만 만든다
 - 특정 자원이 없는 관리자 전용 동작(관리자 인프라 현황 등)은 `PlatformLoader`로 판단한다. `Grant.ADMIN_ONLY` 동작만 받고, 같은 `AuthorizationPolicy`를 지나며 감사 로그를 남긴다. 목록은 그 뒤에 `listVisible`로 꺼낸다
 - 컨트롤러 메서드마다 `@RequirePermission(Action.X)`, `@Authenticated`, `@Public` 중 하나만 붙인다. 없거나 둘 이상이면 앱이 뜨지 않는다 (`EndpointAnnotationVerifier`). 테스트용 컨트롤러도 같다
   - 로더를 부르는 엔드포인트는 `@RequirePermission`을 달고, 로더에 같은 `Action`을 넘긴다. 다르거나 선언이 없으면 500으로 실패한다

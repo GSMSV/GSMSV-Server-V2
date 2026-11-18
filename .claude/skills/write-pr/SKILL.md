@@ -1,11 +1,13 @@
 ---
 name: write-pr
-description: 이 저장소의 깃 컨벤션(AGENTS.md 1장)에 맞춰 develop 대상 PR을 연다. 브랜치를 확인하고, push되지 않은 커밋은 push한 뒤, PR 제목·본문(.github/pull_request_template.md, Closes #번호)·라벨을 규칙대로 채운다. 병합은 하지 않는다. "PR 작성해라", "PR 올려줘", "PR 만들어", "풀리퀘 열어", "pull request" 등 PR을 요청받으면 직접 gh pr create를 치지 말고 항상 이 스킬을 쓴다.
+description: 이 저장소의 깃 컨벤션(AGENTS.md 1장)에 맞춰 develop 대상 PR을 연다. 브랜치를 확인하고, push되지 않은 커밋은 push한 뒤, PR 제목·본문(.github/pull_request_template.md, Closes #번호)·라벨을 규칙대로 채운다. develop → main 릴리스 PR(제목 vYYYYMMDD.N, 본문 맨 위 릴리스 범위)도 연다. 병합은 하지 않는다. "PR 작성해라", "PR 올려줘", "PR 만들어", "풀리퀘 열어", "pull request", "릴리스 PR", "main으로 PR" 등 PR을 요청받으면 직접 gh pr create를 치지 말고 항상 이 스킬을 쓴다.
 ---
 
 # write-pr
 
 현재 브랜치로 `develop` 대상 PR을 연다. 제목·라벨 규칙은 [AGENTS.md 1장](../../../AGENTS.md)에만 있고, 이 문서에는 절차만 둔다. PR은 열기까지만 한다 (병합 금지는 AGENTS.md 절대 규칙).
+
+develop → main 릴리스 PR은 아래 1~10단계 대신 [11. 릴리스 PR](#11-릴리스-pr-develop--main)을 따른다.
 
 ## 1. 브랜치 확인
 
@@ -113,3 +115,69 @@ gh pr view --json url,baseRefName,title,labels,assignees
 ## 10. 보고
 
 PR 링크, 제목, 라벨, 담당자를 알려주고 **병합은 사람이 해야 한다**고 요청한다. develop 병합에는 CI 통과와 작성자가 아닌 1명의 승인이 필요하다는 점도 덧붙인다.
+
+## 11. 릴리스 PR (develop → main)
+
+원본 규칙은 [CONTRIBUTING 6장](../../../.github/CONTRIBUTING.md)과 AGENTS.md 1.2다. 작업 브랜치를 만들지 않고 `develop`을 그대로 `main`에 올리므로 **이슈가 없어도 된다**. 브랜치 확인(1단계)과 이슈 조회(5단계)는 하지 않는다.
+
+### 11.1 범위 확인
+
+```bash
+git fetch origin
+git rev-parse --short origin/main origin/develop
+git log --oneline --first-parent origin/main..origin/develop
+git diff --stat origin/main...origin/develop
+```
+
+- `origin/main..origin/develop`이 비어 있으면 릴리스할 게 없다. 알리고 끝낸다
+- 같은 base·head로 열린 PR이 있는지 `gh pr list --base main --head develop --state open`으로 보고, 있으면 새로 만들지 않는다
+- 범위의 시작은 지금 `origin/main`이 가리키는 커밋이다. 직전 릴리스 PR 이름(`gh pr list --base main --state merged --limit 1 --json title,number`)도 함께 적는다
+
+### 11.2 제목
+
+`vYYYYMMDD.N`. 날짜는 한국 시간으로 오늘이다. 순번은 그날 main 대상 PR 수로 정한다.
+
+```bash
+TZ=Asia/Seoul date +%Y%m%d
+gh pr list --base main --state all --search "v<날짜> in:title" --json number,title
+```
+
+### 11.3 본문
+
+템플릿(`.github/pull_request_template.md`)을 쓰지 않고 아래 형식으로 쓴다. **릴리스 범위를 맨 위에 둔다.**
+
+```markdown
+## 릴리스 범위
+
+- 시작: `main` `<짧은 해시>` (직전 릴리스 `v20261116.2`, #192)
+- 끝: `develop` `<짧은 해시>`
+- 커밋 N개, 파일 N개 변경 (+추가/−삭제)
+
+## 포함된 PR
+
+| PR | 제목 |
+|---|---|
+| #198 | ci: CodeQL을 advanced setup(push 전용)으로 전환 |
+
+## 배포 전 확인
+
+- [ ] 새 마이그레이션: 파일 이름 나열, 없으면 없음
+- [ ] 새 환경 변수·설정: 없으면 없음
+```
+
+- 포함된 PR은 `--first-parent` 로그의 squash 커밋 제목 끝 `(#번호)`에서 뽑는다
+- 마이그레이션은 `git diff --name-only origin/main...origin/develop -- src/main/resources/db/migration`으로 확인한다
+- 새 환경 변수는 `application*.yml` diff에서 새 `${...}`를 찾는다. 값은 적지 않는다
+
+### 11.4 만들기
+
+```bash
+gh pr create --base main --head develop \
+  --title "v20261117.0" \
+  --label chore \
+  --assignee @me \
+  --body-file <임시 본문 파일>
+```
+
+- 라벨은 `chore`로 둔다 (제목에 타입이 없다)
+- 보고할 때 main 병합은 **Create a merge commit**으로 한다는 점과, 작성자가 아닌 1명의 승인이 필요하다는 점을 덧붙인다

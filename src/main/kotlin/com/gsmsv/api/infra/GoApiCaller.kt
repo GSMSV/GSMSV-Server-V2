@@ -39,19 +39,51 @@ class GoApiCaller(
         } catch (e: BusinessException) {
             throw e
         } catch (e: RestClientResponseException) {
-            val status = e.statusCode.value()
-            log.warn { "Go 호출 실패: operation=$operation, status=$status" }
-            throw if (status == 503 || status == 504) {
-                BusinessException(ErrorCode.UPSTREAM_UNAVAILABLE)
-            } else {
-                BusinessException(ErrorCode.GATEWAY_SYNC_FAILED)
-            }
+            throw translate(operation, e)
         } catch (e: ResourceAccessException) {
             log.warn { "Go 연결 실패: operation=$operation, cause=${e.cause?.javaClass?.simpleName}" }
             throw BusinessException(ErrorCode.UPSTREAM_UNAVAILABLE)
         } catch (e: RestClientException) {
             throw syncFailed(operation, e.javaClass.simpleName)
         }
+
+    /** 조회. Go가 404로 답하면 null이다 (예: 작업 기록이 사라진 `JOB_NOT_FOUND`) */
+    fun <T : Any> getOrNull(
+        operation: String,
+        uri: String,
+        uriVariables: Map<String, Any>,
+        responseType: Class<T>,
+    ): T? =
+        try {
+            restClient
+                .get()
+                .uri(uri, uriVariables)
+                .retrieve()
+                .body(responseType)
+                ?: throw syncFailed(operation, "빈 응답")
+        } catch (e: RestClientResponseException) {
+            if (e.statusCode.value() == 404) null else throw translate(operation, e)
+        } catch (e: BusinessException) {
+            throw e
+        } catch (e: ResourceAccessException) {
+            log.warn { "Go 연결 실패: operation=$operation, cause=${e.cause?.javaClass?.simpleName}" }
+            throw BusinessException(ErrorCode.UPSTREAM_UNAVAILABLE)
+        } catch (e: RestClientException) {
+            throw syncFailed(operation, e.javaClass.simpleName)
+        }
+
+    private fun translate(
+        operation: String,
+        e: RestClientResponseException,
+    ): BusinessException {
+        val status = e.statusCode.value()
+        log.warn { "Go 호출 실패: operation=$operation, status=$status" }
+        return if (status == 503 || status == 504) {
+            BusinessException(ErrorCode.UPSTREAM_UNAVAILABLE)
+        } else {
+            BusinessException(ErrorCode.GATEWAY_SYNC_FAILED)
+        }
+    }
 
     private fun syncFailed(
         operation: String,

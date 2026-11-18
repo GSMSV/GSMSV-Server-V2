@@ -80,4 +80,21 @@ object GrnParser {
         check(SERVICE_RESOURCE_GRN.matches(grn)) { "DB 값으로 만든 GRN이 형식에 맞지 않습니다." }
         return grn
     }
+
+    /**
+     * DB에 저장된 부모 소유자 id·부모 id·하위 id로 하위 자원 표기 `{부모 GRN}/{하위 id}`를 만든다.
+     *
+     * @throws IllegalStateException 만든 표기가 형식에 맞지 않을 때. DB 값이 잘못된 것이므로 서버 오류다
+     */
+    fun formatSubResource(
+        parentOwnerId: String,
+        parentId: String,
+        childId: String,
+    ): String {
+        val notation = "${format(parentOwnerId, parentId)}/$childId"
+        // 정규식과 부모·하위 종류 조합 검사를 요청 쪽 파서와 똑같이 거친다
+        runCatching { parseSubResource(notation) }
+            .onFailure { throw IllegalStateException("DB 값으로 만든 하위 자원 표기가 형식에 맞지 않습니다.") }
+        return notation
+    }
 }

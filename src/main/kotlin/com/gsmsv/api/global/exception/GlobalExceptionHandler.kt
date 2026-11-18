@@ -9,6 +9,7 @@ import org.springframework.beans.TypeMismatchException
 import org.springframework.context.MessageSourceResolvable
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatusCode
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.validation.FieldError
@@ -44,6 +45,8 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ResponseEntity
             .status(exception.errorCode.status)
             .headers(exception.responseHeaders)
+            // SSE 요청(Accept: text/event-stream)이 스트림을 열기 전에 실패해도 JSON 오류로 답하도록 형식을 정해 둔다
+            .contentType(MediaType.APPLICATION_JSON)
             .body(
                 ErrorResponse(
                     exception.errorCode.name,
