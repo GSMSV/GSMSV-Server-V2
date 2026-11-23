@@ -44,12 +44,11 @@ data class MyAppQuotaResponse(
     val alwaysOn: CountUsageResponse,
 )
 
-data class CountUsageResponse(
-    val used: Long,
-    val limit: Long,
+data class UsageAmountResponse<T>(
+    val used: T,
+    val limit: T,
 )
 
-data class StorageUsageResponse(
-    val used: Double,
-    val limit: Double,
-)
+typealias CountUsageResponse = UsageAmountResponse<Long>
+
+typealias StorageUsageResponse = UsageAmountResponse<Double>
