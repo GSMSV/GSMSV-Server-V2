@@ -29,6 +29,9 @@ spring:
     out-of-order: true
 
 gsmsv:
+  app:
+    subdomain:
+      reserved: []
   auth:
     frontend-url: ${AUTH_FRONTEND_URL:}
   team:
