@@ -18,9 +18,11 @@ import com.gsmsv.api.team.dto.ResubmitTeamRequest
 import com.gsmsv.api.team.dto.ResubmitTeamResponse
 import com.gsmsv.api.team.dto.TeamDetailResponse
 import com.gsmsv.api.team.dto.TeamSummaryResponse
+import com.gsmsv.api.team.dto.TeamUsageResponse
 import com.gsmsv.api.team.service.TeamApiService
 import com.gsmsv.api.team.service.TeamInvitationService
 import com.gsmsv.api.team.service.TeamService
+import com.gsmsv.api.team.service.TeamUsageService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -41,6 +43,7 @@ class TeamController(
     private val teamLoader: TeamLoader,
     private val permissionsResolver: PermissionsResolver,
     private val teamInvitationService: TeamInvitationService,
+    private val teamUsageService: TeamUsageService,
 ) {
     @RequirePermission(Action.INVITE_MEMBER)
     @PostMapping("/{team_id}/invitations")
@@ -109,6 +112,16 @@ class TeamController(
         val team = teamLoader.load(actor, teamId, Action.VIEW, teamService)
         val permissions = permissionsResolver.resolve(actor, team, TEAM_DETAIL_ACTIONS)
         return teamApiService.getTeamDetail(user.userId, team, permissions)
+    }
+
+    @RequirePermission(Action.VIEW)
+    @GetMapping("/{team_id}/usage")
+    fun getTeamUsage(
+        @CurrentUser user: AuthenticatedUser,
+        @PathVariable("team_id") teamId: String,
+    ): TeamUsageResponse {
+        val team = teamLoader.load(user.toActor(), teamId, Action.VIEW, teamService)
+        return teamUsageService.get(team)
     }
 
     companion object {

@@ -18,6 +18,7 @@ data class DatabaseProperties(
     @field:Valid val connection: Connection,
     @field:Valid val storageLimit: StorageLimit,
     @field:Valid val countLimit: CountLimit = CountLimit(),
+    @field:Valid val dedicatedLimit: DedicatedLimit = DedicatedLimit(),
 ) {
     data class Connection(
         @field:NotBlank val host: String,
@@ -36,5 +37,9 @@ data class DatabaseProperties(
     data class CountLimit(
         @field:Positive val personal: Int = 2,
         @field:Positive val team: Int = 4,
+    )
+
+    data class DedicatedLimit(
+        @field:Positive val team: Int = 1,
     )
 }
