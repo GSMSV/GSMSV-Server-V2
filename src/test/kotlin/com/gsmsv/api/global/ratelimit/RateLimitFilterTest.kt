@@ -104,6 +104,20 @@ class RateLimitFilterTest {
     }
 
     @Test
+    fun `서브도메인 확인은 사용자당 60회 이후 429다`() {
+        val rule = userRule.copy(limit = 60)
+        val filter = filter(rule)
+        val path = "/api/v2/apps/subdomains/availability"
+        login("user-aaaaaaaaaaaa")
+
+        repeat(60) { assertEquals(200, call(filter, path).status) }
+        assertEquals(429, call(filter, path).status)
+
+        login("user-bbbbbbbbbbbb")
+        assertEquals(200, call(filter, path).status)
+    }
+
+    @Test
     fun `꺼 두면 제한하지 않는다`() {
         val filter = filter(ipRule, enabled = false)
 

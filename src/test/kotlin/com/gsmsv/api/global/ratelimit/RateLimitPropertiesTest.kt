@@ -27,6 +27,10 @@ class RateLimitPropertiesTest {
         assertEquals(RateLimitProperties.Key.IP, login.key)
         assertEquals(10, login.limit)
         assertEquals(Duration.ofMinutes(1), login.window)
-        assertEquals(60, properties.rules.first { it.key == RateLimitProperties.Key.USER }.limit)
+        val availability = properties.rules.first { it.name == "subdomain-availability" }
+        assertEquals(listOf("/api/v2/apps/subdomains/availability"), availability.paths)
+        assertEquals(RateLimitProperties.Key.USER, availability.key)
+        assertEquals(60, availability.limit)
+        assertEquals(Duration.ofMinutes(1), availability.window)
     }
 }
