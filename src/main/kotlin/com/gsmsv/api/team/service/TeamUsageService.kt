@@ -11,7 +11,6 @@ import com.gsmsv.api.team.dto.TeamUsageResponse
 import com.gsmsv.api.team.dto.TeamVmUsageResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
 
 @Service
 class TeamUsageService(
@@ -49,7 +48,7 @@ class TeamUsageService(
                     memoryMb = UsageAmountResponse(appUsage.memoryUsedMib, appUsage.memoryLimitMib),
                     alwaysOn = UsageAmountResponse(appUsage.alwaysOnUsed, appUsage.alwaysOnLimit),
                 ),
-            updatedAt = Instant.now(),
+            updatedAt = null,
         )
     }
 }

@@ -55,7 +55,7 @@ class TeamUsageControllerTest(
             jsonPath("$.db.dedicated.limit") { value(1) }
             jsonPath("$.db.write_locked") { value(true) }
             jsonPath("$.app.memory_mb.limit") { value(4096) }
-            jsonPath("$.updated_at") { exists() }
+            jsonPath("$.updated_at") { value(null) }
         }
         verify(exactly = 1) { teamUsageService.get(match { it.id == TEAM_ID }) }
     }
@@ -86,7 +86,7 @@ class TeamUsageControllerTest(
                 UsageAmountResponse(1024L, 4096L),
                 UsageAmountResponse(1L, 2L),
             ),
-            java.time.Instant.parse("2026-11-23T00:00:00Z"),
+            null,
         )
 
     private companion object {

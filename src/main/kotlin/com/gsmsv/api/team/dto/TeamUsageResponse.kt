@@ -8,7 +8,7 @@ data class TeamUsageResponse(
     val vm: TeamVmUsageResponse,
     val db: TeamDatabaseUsageResponse,
     val app: TeamAppUsageResponse,
-    val updatedAt: Instant,
+    val updatedAt: Instant?,
 )
 
 data class TeamVmUsageResponse(

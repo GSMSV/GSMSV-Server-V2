@@ -11,7 +11,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class TeamUsageServiceTest {
     private val vmUsageReader = mockk<TeamVmUsageReader>()
@@ -41,7 +41,7 @@ class TeamUsageServiceTest {
         assertEquals(true, response.db.writeLocked)
         assertEquals(1024, response.app.memoryMb.used)
         assertEquals(2, response.app.alwaysOn.limit)
-        assertNotNull(response.updatedAt)
+        assertNull(response.updatedAt)
     }
 
     private companion object {
