@@ -12,8 +12,11 @@ import com.gsmsv.api.support.ApiWebMvcTest
 import com.gsmsv.api.support.TestTokens
 import com.gsmsv.api.support.bearer
 import com.gsmsv.api.vm.domain.Vm
+import com.gsmsv.api.vm.dto.VmMetricPointResponse
+import com.gsmsv.api.vm.dto.VmMetricsResponse
 import com.gsmsv.api.vm.dto.VmSpecResponse
 import com.gsmsv.api.vm.dto.VmSummaryResponse
+import com.gsmsv.api.vm.service.VmMetricsService
 import com.gsmsv.api.vm.service.VmQueryService
 import com.gsmsv.api.vm.service.VmResourceReader
 import com.ninjasquad.springmockk.MockkBean
@@ -35,6 +38,8 @@ class VmControllerTest(
     @MockkBean private lateinit var vmReader: VmResourceReader
 
     @MockkBean private lateinit var queries: VmQueryService
+
+    @MockkBean private lateinit var metrics: VmMetricsService
 
     @Test
     fun `목록은 owner를 해석해 넘기고 null 칸도 snake_case로 내보낸다`() {
@@ -107,6 +112,79 @@ class VmControllerTest(
 
         verify(exactly = 1) { queries.get(UserActor(ME), vm) }
     }
+
+    @Test
+    fun `사용량 그래프는 로더를 통과한 VM과 period로 만들고 null 칸도 snake_case로 내보낸다`() {
+        val vm = vm()
+        every { loader.load(UserActor(ME), GRN, Action.VIEW, vmReader) } returns vm
+        every { metrics.get(vm, "day") } returns
+            VmMetricsResponse(
+                period = "day",
+                points =
+                    listOf(
+                        VmMetricPointResponse(Instant.parse("2026-11-24T09:00:00Z"), 3.1, 1650.0, 12000.0, 8000.0, 0.0, 4096.0),
+                        VmMetricPointResponse(Instant.parse("2026-11-24T09:30:00Z"), null, null, null, null, null, null),
+                    ),
+            )
+
+        mockMvc.get("/api/v2/vms/$GRN/metrics?period=day") { bearer(tokens.user(ME)) }.andExpect {
+            status { isOk() }
+            jsonPath("$.period") { value("day") }
+            jsonPath("$.points[0].at") { value("2026-11-24T09:00:00Z") }
+            jsonPath("$.points[0].cpu_percent") { value(3.1) }
+            jsonPath("$.points[0].memory_mb") { value(1650.0) }
+            jsonPath("$.points[0].net_in_bps") { value(12000.0) }
+            jsonPath("$.points[0].net_out_bps") { value(8000.0) }
+            jsonPath("$.points[0].disk_read_bps") { value(0.0) }
+            jsonPath("$.points[0].disk_write_bps") { value(4096.0) }
+            jsonPath("$.points[1].cpu_percent") { value(null) }
+        }
+        mockMvc.get("/api/v2/vms/$GRN/metrics").andExpect { status { isUnauthorized() } }
+    }
+
+    @Test
+    fun `사용량 그래프는 period가 없으면 null로 넘기고 서비스 오류를 그대로 돌려준다`() {
+        val vm = vm()
+        every { loader.load(UserActor(ME), GRN, Action.VIEW, vmReader) } returns vm
+        every { metrics.get(vm, null) } throws BusinessException(ErrorCode.UPSTREAM_UNAVAILABLE)
+        every { metrics.get(vm, "week") } throws BusinessException(ErrorCode.VALIDATION_FAILED)
+
+        mockMvc.get("/api/v2/vms/$GRN/metrics") { bearer(tokens.user(ME)) }.andExpect {
+            status { isServiceUnavailable() }
+            jsonPath("$.code") { value("UPSTREAM_UNAVAILABLE") }
+        }
+        mockMvc.get("/api/v2/vms/$GRN/metrics?period=week") { bearer(tokens.user(ME)) }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+        }
+    }
+
+    @Test
+    fun `사용량 그래프는 보이지 않는 VM이면 지표를 묻지 않고 404다`() {
+        every { loader.load(UserActor(ME), GRN, Action.VIEW, vmReader) } throws BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
+
+        mockMvc.get("/api/v2/vms/$GRN/metrics?period=week") { bearer(tokens.user(ME)) }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value("RESOURCE_NOT_FOUND") }
+        }
+        verify(exactly = 0) { metrics.get(any(), any()) }
+    }
+
+    private fun vm() =
+        Vm.create(
+            id = "vm-k3m9x2p7q4ta",
+            name = "테스트 VM",
+            purpose = null,
+            owner = Owner.User(ME),
+            image = "ubuntu-24.04",
+            vcpu = 2,
+            ramGb = 4,
+            ssdGb = 20,
+            initialUsername = "ubuntu",
+            initialPasswordEncrypted = "encrypted",
+            createdBy = ME,
+            expiresAt = Instant.parse("2027-01-01T00:00:00Z"),
+        )
 
     private fun summary() =
         VmSummaryResponse(
