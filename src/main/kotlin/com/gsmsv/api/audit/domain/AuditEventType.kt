@@ -17,4 +17,7 @@ enum class AuditEventType {
 
     /** 관리자가 삭제된 데이터베이스를 백업에서 되살렸다 */
     DATABASE_DELETED_RECOVER,
+
+    /** VM 초기 비밀번호를 봤다 */
+    VM_CREDENTIALS_READ,
 }
