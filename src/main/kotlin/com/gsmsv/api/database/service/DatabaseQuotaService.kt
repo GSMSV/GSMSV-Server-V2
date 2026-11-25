@@ -7,6 +7,7 @@ import com.gsmsv.api.database.repository.DatabaseRepository
 import com.gsmsv.api.global.authorization.Owner
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 /** 개인 DB 한도와 사용량. 다른 도메인은 DB repository 대신 이 service로 받는다 */
 @Service
@@ -42,6 +43,7 @@ class DatabaseQuotaService(
             sharedStorageUsedGib = sharedStorageUsedGib,
             sharedStorageLimitGib = sharedStorageLimitGib,
             writeLocked = sharedStorageUsedGib > sharedStorageLimitGib,
+            updatedAt = usageReader.ownerUsageUpdatedAt(owner),
         )
     }
 }
@@ -61,4 +63,5 @@ data class TeamDatabaseQuotaUsage(
     val sharedStorageUsedGib: Double,
     val sharedStorageLimitGib: Double,
     val writeLocked: Boolean,
+    val updatedAt: Instant? = null,
 )

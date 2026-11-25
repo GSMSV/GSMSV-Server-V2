@@ -48,7 +48,7 @@ class TeamUsageService(
                     memoryMb = UsageAmountResponse(appUsage.memoryUsedMib, appUsage.memoryLimitMib),
                     alwaysOn = UsageAmountResponse(appUsage.alwaysOnUsed, appUsage.alwaysOnLimit),
                 ),
-            updatedAt = null,
+            updatedAt = databaseUsage.updatedAt,
         )
     }
 }

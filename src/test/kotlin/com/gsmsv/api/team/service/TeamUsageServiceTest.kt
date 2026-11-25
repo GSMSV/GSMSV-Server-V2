@@ -10,6 +10,7 @@ import com.gsmsv.api.team.domain.Team
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -42,6 +43,19 @@ class TeamUsageServiceTest {
         assertEquals(1024, response.app.memoryMb.used)
         assertEquals(2, response.app.alwaysOn.limit)
         assertNull(response.updatedAt)
+    }
+
+    @Test
+    fun `측정 시각이 사용량 통계 응답에 포함된다`() {
+        val measuredAt = Instant.parse("2026-11-23T11:00:00Z")
+        every { vmUsageReader.readUsage(TEAM_ID) } returns TeamVmUsage(0, 0, 0)
+        every { databaseQuotaService.teamUsage(TEAM_ID) } returns
+            TeamDatabaseQuotaUsage(0, 0, 0, 1, 0.0, 2.0, false, measuredAt)
+        every { appQuotaService.teamUsage(TEAM_ID) } returns AppQuotaUsage(0, 4, 0, 4096, 0, 2)
+
+        val response = service.get(Team(TEAM_ID, "?"))
+
+        assertEquals(measuredAt, response.updatedAt)
     }
 
     private companion object {

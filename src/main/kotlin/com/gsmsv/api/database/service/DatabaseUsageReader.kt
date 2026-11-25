@@ -2,6 +2,7 @@ package com.gsmsv.api.database.service
 
 import com.gsmsv.api.global.authorization.Owner
 import org.springframework.stereotype.Component
+import java.time.Instant
 
 /**
  * DB 사용 용량(GiB) 조회 포트. 응답의 `storage`를 채운다.
@@ -13,6 +14,8 @@ interface DatabaseUsageReader {
 
     /** 소유자가 가진 공유형 DB 전체의 사용 용량 */
     fun ownerUsedGib(owner: Owner): Double
+
+    fun ownerUsageUpdatedAt(owner: Owner): Instant? = null
 }
 
 @Component
