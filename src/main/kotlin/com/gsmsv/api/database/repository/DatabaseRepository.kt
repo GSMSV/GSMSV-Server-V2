@@ -1,6 +1,7 @@
 package com.gsmsv.api.database.repository
 
 import com.gsmsv.api.database.domain.Database
+import com.gsmsv.api.database.domain.DatabaseIsolation
 import com.gsmsv.api.database.domain.DatabaseStatus
 import org.springframework.data.jpa.repository.JpaRepository
 
@@ -17,6 +18,12 @@ interface DatabaseRepository : JpaRepository<Database, String> {
     fun countByOwnerTypeAndOwnerIdAndDeletedAtIsNull(
         ownerType: Database.OwnerType,
         ownerId: String,
+    ): Long
+
+    fun countByOwnerTypeAndOwnerIdAndIsolationAndDeletedAtIsNull(
+        ownerType: Database.OwnerType,
+        ownerId: String,
+        isolation: DatabaseIsolation,
     ): Long
 
     fun findAllByOwnerTypeAndOwnerIdInAndDeletedAtIsNull(

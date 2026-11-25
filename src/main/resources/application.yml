@@ -87,6 +87,8 @@ gsmsv:
     count-limit:
       personal: 2
       team: 4
+    dedicated-limit:
+      team: 1
   network:
     https:
       # 사용자 서브도메인 뒤에 붙는 기본 도메인. 운영 값은 환경 변수로 넣는다

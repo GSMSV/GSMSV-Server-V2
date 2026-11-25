@@ -25,6 +25,17 @@ class AppQuotaService(
             alwaysOnUsed = 0,
             alwaysOnLimit = AppQuota.PERSONAL_ALWAYS_ON,
         )
+
+    @Transactional(readOnly = true)
+    fun teamUsage(teamId: String): AppQuotaUsage =
+        AppQuotaUsage(
+            countUsed = appRepository.countByOwnerTypeAndOwnerId(AppOwnerType.TEAM, teamId),
+            countLimit = AppQuota.TEAM_COUNT,
+            memoryUsedMib = 0,
+            memoryLimitMib = AppQuota.TEAM_MEMORY_MIB,
+            alwaysOnUsed = 0,
+            alwaysOnLimit = AppQuota.TEAM_ALWAYS_ON,
+        )
 }
 
 data class AppQuotaUsage(
@@ -40,6 +51,8 @@ data class AppQuotaUsage(
 internal object AppQuota {
     const val PERSONAL_COUNT = 2L
     const val TEAM_COUNT = 4L
+    const val TEAM_MEMORY_MIB = 4096L
+    const val TEAM_ALWAYS_ON = 2L
 
     // 개인 메모리 할당량 합계 2 GiB
     const val PERSONAL_MEMORY_MIB = 2048L
