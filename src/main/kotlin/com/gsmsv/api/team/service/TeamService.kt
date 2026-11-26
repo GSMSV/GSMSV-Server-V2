@@ -16,6 +16,13 @@ import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+data class MyTeamSummary(
+    val id: String,
+    val name: String,
+    val status: TeamStatus,
+    val role: TeamRole,
+)
+
 @Service
 class TeamService(
     private val teamRepository: TeamRepository,
@@ -34,6 +41,25 @@ class TeamService(
     @Transactional(readOnly = true)
     override fun findMemberships(userId: String): Map<String, TeamRole> =
         teamMemberRepository.findAllByUserId(userId).associate { it.teamId to it.role }
+
+    @Transactional(readOnly = true)
+    fun findMyTeamSummaries(userId: String): List<MyTeamSummary> {
+        val memberships = teamMemberRepository.findAllByUserId(userId)
+        if (memberships.isEmpty()) return emptyList()
+        val teams = teamRepository.findAllById(memberships.map { it.teamId }).associateBy { it.id }
+        return memberships.mapNotNull { member ->
+            teams[member.teamId]?.let { team -> MyTeamSummary(team.id, team.name, team.status, member.role) }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    fun sharesTeam(
+        firstUserId: String,
+        secondUserId: String,
+    ): Boolean {
+        val first = teamMemberRepository.findAllByUserId(firstUserId).map { it.teamId }.toSet()
+        return teamMemberRepository.findAllByUserId(secondUserId).any { it.teamId in first }
+    }
 
     /** 팀원 전원의 사용자 id. 알림처럼 팀 앞으로 온 일을 팀원에게 나눌 때 쓴다 */
     @Transactional(readOnly = true)

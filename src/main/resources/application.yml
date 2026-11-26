@@ -34,6 +34,11 @@ gsmsv:
       reserved: []
   auth:
     frontend-url: ${AUTH_FRONTEND_URL:}
+  user:
+    profile-image:
+      storage-dir: ${PROFILE_IMAGE_STORAGE_DIR:./data/profile-images}
+      max-file-size: 2MB
+      max-pixels: 256
   team:
     email-domain: ${SCHOOL_EMAIL_DOMAIN:}
   security:

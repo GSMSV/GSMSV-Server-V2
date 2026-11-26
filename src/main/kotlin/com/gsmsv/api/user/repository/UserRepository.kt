@@ -7,4 +7,6 @@ interface UserRepository : JpaRepository<User, String> {
     fun findByDataGsmIdAndDeletedAtIsNull(dataGsmId: String): User?
 
     fun findByEmailIgnoreCaseAndDeletedAtIsNull(email: String): User?
+
+    fun findByProfileImageFileNameAndDeletedAtIsNull(fileName: String): User?
 }
