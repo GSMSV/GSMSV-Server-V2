@@ -2,8 +2,8 @@ package com.gsmsv.api.user.service
 
 import com.gsmsv.api.user.config.ProfileImageProperties
 import org.springframework.stereotype.Component
-import java.awt.Image
 import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
@@ -22,8 +22,9 @@ class LocalProfileImageStorage(
     private val properties: ProfileImageProperties,
 ) : ProfileImageStorage {
     override fun save(bytes: ByteArray): String {
+        validateFormat(bytes)
         Files.createDirectories(properties.storageDir)
-        val image = ImageIO.read(bytes.inputStream()) ?: return throw IllegalArgumentException("unsupported image")
+        val image = readImage(bytes)
         val side = properties.maxPixels
         val output = BufferedImage(side, side, BufferedImage.TYPE_INT_RGB)
         val graphics = output.createGraphics()
@@ -57,7 +58,35 @@ class LocalProfileImageStorage(
         return properties.storageDir.resolve(fileName).normalize()
     }
 
+    private fun validateFormat(bytes: ByteArray) {
+        val jpeg = bytes.size >= 3 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte() && bytes[2] == 0xFF.toByte()
+        val png = bytes.size >= 8 && bytes.copyOfRange(0, 8).contentEquals(PNG_SIGNATURE)
+        val webp =
+            bytes.size >= 12 && bytes.copyOfRange(0, 4).contentEquals("RIFF".toByteArray()) &&
+                bytes.copyOfRange(8, 12).contentEquals("WEBP".toByteArray())
+        if (!jpeg && !png && !webp) throw IllegalArgumentException("unsupported image")
+    }
+
+    private fun readImage(bytes: ByteArray): BufferedImage {
+        ImageIO.createImageInputStream(ByteArrayInputStream(bytes)).use { input ->
+            val reader =
+                input?.let { ImageIO.getImageReaders(it).asSequence().firstOrNull() }
+                    ?: throw IllegalArgumentException("unsupported image")
+            try {
+                reader.setInput(input, true, true)
+                val width = reader.getWidth(0).toLong()
+                val height = reader.getHeight(0).toLong()
+                if (width * height > properties.maxSourcePixels) throw IllegalArgumentException("image too large")
+                return ImageIO.read(ByteArrayInputStream(bytes))
+                    ?: throw IllegalArgumentException("unsupported image")
+            } finally {
+                reader.dispose()
+            }
+        }
+    }
+
     private companion object {
         val FILE_NAME = Regex("[0-9a-f-]{36}\\.png")
+        val PNG_SIGNATURE = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
     }
 }
