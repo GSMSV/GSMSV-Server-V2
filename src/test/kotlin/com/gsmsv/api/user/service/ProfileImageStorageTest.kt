@@ -39,6 +39,22 @@ class ProfileImageStorageTest {
         assertFailsWith<IllegalArgumentException> { storage.save(imageBytes(2, 2)) }
     }
 
+    @Test
+    fun `WebP를 실제로 디코딩해서 저장한다`() {
+        val directory = Files.createTempDirectory("profile-image-test")
+        val storage = LocalProfileImageStorage(ProfileImageProperties(storageDir = directory))
+
+        val source = BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB)
+        val webpBytes =
+            java.io.ByteArrayOutputStream().use { output ->
+                check(ImageIO.write(source, "webp", output))
+                output.toByteArray()
+            }
+        val fileName = storage.save(webpBytes)
+
+        assertTrue(ImageIO.read(directory.resolve(fileName).toFile()).width == 256)
+    }
+
     private fun imageBytes(
         width: Int,
         height: Int,
