@@ -23,6 +23,8 @@ class User(
     grade: Int? = null,
     classNumber: Int? = null,
     studentNumber: Int? = null,
+    major: String? = null,
+    profileImageFileName: String? = null,
     createdAt: Instant = Instant.now(),
     deletedAt: Instant? = null,
 ) {
@@ -58,6 +60,14 @@ class User(
     final var studentNumber: Int? = studentNumber
         private set
 
+    @Column(length = 100)
+    final var major: String? = major
+        private set
+
+    @Column(name = "profile_image_file_name", length = 80)
+    final var profileImageFileName: String? = profileImageFileName
+        private set
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = createdAt
 
@@ -71,12 +81,22 @@ class User(
         grade: Int?,
         classNumber: Int?,
         studentNumber: Int?,
+        major: String? = this.major,
     ) {
         this.email = email
         this.name = name
         this.grade = grade
         this.classNumber = classNumber
         this.studentNumber = studentNumber
+        this.major = major
+    }
+
+    fun changeProfileImage(fileName: String) {
+        profileImageFileName = fileName
+    }
+
+    fun clearProfileImage() {
+        profileImageFileName = null
     }
 
     fun deactivate() {

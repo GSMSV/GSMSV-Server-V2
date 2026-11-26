@@ -33,6 +33,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
+    implementation("org.sejda.imageio:webp-imageio:0.1.6")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
     // 공유 DB 서버(MySQL)에 database·계정을 만들 때만 쓴다. 앱 자체 DB는 PostgreSQL이다

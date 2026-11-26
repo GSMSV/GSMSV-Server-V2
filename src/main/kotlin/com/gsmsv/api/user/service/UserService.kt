@@ -37,10 +37,11 @@ class UserService(
         grade: Int?,
         classNumber: Int?,
         studentNumber: Int?,
+        major: String? = null,
     ): User {
         val existingUser = userRepository.findByDataGsmIdAndDeletedAtIsNull(dataGsmId)
         if (existingUser != null) {
-            existingUser.updateFromDataGsm(email, name, grade, classNumber, studentNumber)
+            existingUser.updateFromDataGsm(email, name, grade, classNumber, studentNumber, major)
             return existingUser
         }
 
@@ -55,6 +56,7 @@ class UserService(
                 grade = grade,
                 classNumber = classNumber,
                 studentNumber = studentNumber,
+                major = major,
             ),
         )
     }
