@@ -35,7 +35,11 @@ data class ConnectionsResponse(
     val discord: Boolean,
 )
 
-fun User.toMeResponse(teams: List<MyTeamResponse>): MeResponse =
+fun User.toMeResponse(
+    teams: List<MyTeamResponse>,
+    githubConnected: Boolean,
+    discordConnected: Boolean,
+): MeResponse =
     MeResponse(
         id = id,
         email = email,
@@ -45,5 +49,5 @@ fun User.toMeResponse(teams: List<MyTeamResponse>): MeResponse =
         joinedAt = createdAt,
         profileImageUrl = profileImageFileName?.let { "/api/v2/files/profile-images/$it" },
         teams = teams,
-        connections = ConnectionsResponse(github = false, discord = false),
+        connections = ConnectionsResponse(githubConnected, discordConnected),
     )

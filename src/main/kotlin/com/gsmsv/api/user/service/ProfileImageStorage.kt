@@ -4,6 +4,7 @@ import com.gsmsv.api.user.config.ProfileImageProperties
 import org.springframework.stereotype.Component
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
@@ -77,8 +78,12 @@ class LocalProfileImageStorage(
                 val width = reader.getWidth(0).toLong()
                 val height = reader.getHeight(0).toLong()
                 if (width * height > properties.maxSourcePixels) throw IllegalArgumentException("image too large")
-                return ImageIO.read(ByteArrayInputStream(bytes))
-                    ?: throw IllegalArgumentException("unsupported image")
+                return try {
+                    ImageIO.read(ByteArrayInputStream(bytes))
+                        ?: throw IllegalArgumentException("unsupported image")
+                } catch (_: IOException) {
+                    throw IllegalArgumentException("unsupported image")
+                }
             } finally {
                 reader.dispose()
             }
