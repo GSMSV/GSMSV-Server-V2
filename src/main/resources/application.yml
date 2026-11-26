@@ -4,7 +4,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 2MB
-      max-request-size: 2MB
+      max-request-size: 3MB
   profiles:
     # 프로필을 주지 않고 실행하면 로컬 개발로 본다. dev·prod는 배포 환경에서 SPRING_PROFILES_ACTIVE로 지정한다
     default: local
