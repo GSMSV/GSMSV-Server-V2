@@ -1,5 +1,7 @@
 package com.gsmsv.api.infra.vm
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 /**
  * 가상화 서버가 보고한 VM 실시간 상태 조회.
  *
@@ -16,8 +18,12 @@ interface VmStateInfraClient {
     fun getState(vmId: String): VmLiveState?
 }
 
+// Go 내부 API(`VmPowerState`)는 소문자로 보낸다
 enum class VmPower {
+    @JsonProperty("running")
     RUNNING,
+
+    @JsonProperty("stopped")
     STOPPED,
 }
 

@@ -30,6 +30,14 @@ data class InfraJob(
     @param:JsonProperty("error") val error: InfraJobError? = null,
 )
 
+/** Infra `JobAccepted`. 명령형 작업(VM 만들기·지우기 등)을 받았을 때의 202 본문이다 */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class InfraJobAccepted(
+    @param:JsonProperty("job_id") val jobId: String,
+    @param:JsonProperty("status") val status: String,
+    @param:JsonProperty("queue_position") val queuePosition: Int,
+)
+
 /** Infra `JobError`. [details]에는 구현 값이 들어 있어 사용자에게 내보내지 않는다 */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class InfraJobError(
