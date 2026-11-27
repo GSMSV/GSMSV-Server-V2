@@ -1,8 +1,16 @@
 package com.gsmsv.api.infra.config
 
+import com.gsmsv.api.infra.job.FakeJobInfraClient
+import com.gsmsv.api.infra.job.HttpJobInfraClient
 import com.gsmsv.api.infra.network.FakeNetworkInfraClient
 import com.gsmsv.api.infra.network.HttpNetworkInfraClient
 import com.gsmsv.api.infra.network.NetworkInfraClient
+import com.gsmsv.api.infra.node.FakeNodeInfraClient
+import com.gsmsv.api.infra.node.HttpNodeInfraClient
+import com.gsmsv.api.infra.node.NodeInfraClient
+import com.gsmsv.api.infra.vm.FakeVmInfraClient
+import com.gsmsv.api.infra.vm.HttpVmInfraClient
+import com.gsmsv.api.infra.vm.VmInfraClient
 import org.junit.jupiter.api.Test
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
@@ -24,6 +32,12 @@ class InfraConfigTest {
                 InfraRestClientConfig::class.java,
                 FakeNetworkInfraClient::class.java,
                 HttpNetworkInfraClient::class.java,
+                FakeJobInfraClient::class.java,
+                HttpJobInfraClient::class.java,
+                FakeVmInfraClient::class.java,
+                HttpVmInfraClient::class.java,
+                FakeNodeInfraClient::class.java,
+                HttpNodeInfraClient::class.java,
             ).withBean(RestClient.Builder::class.java, { RestClient.builder() })
             .withInitializer { it.environment.setActiveProfiles(*profiles) }
 
@@ -31,6 +45,8 @@ class InfraConfigTest {
     fun `local 프로필에서는 설정 없이 모의 구현이 뜬다`() {
         runner("local").run { context ->
             assertIs<FakeNetworkInfraClient>(context.getBean(NetworkInfraClient::class.java))
+            assertIs<FakeVmInfraClient>(context.getBean(VmInfraClient::class.java))
+            assertIs<FakeNodeInfraClient>(context.getBean(NodeInfraClient::class.java))
             assertTrue(context.getBeansOfType(RestClient::class.java).isEmpty())
         }
     }
@@ -41,6 +57,8 @@ class InfraConfigTest {
             .withPropertyValues("gsmsv.infra.base-url=http://go.test", "gsmsv.infra.shared-secret=test-secret")
             .run { context ->
                 assertIs<HttpNetworkInfraClient>(context.getBean(NetworkInfraClient::class.java))
+                assertIs<HttpVmInfraClient>(context.getBean(VmInfraClient::class.java))
+                assertIs<HttpNodeInfraClient>(context.getBean(NodeInfraClient::class.java))
                 assertNotNull(context.getBean(RestClient::class.java))
             }
     }
